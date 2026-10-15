@@ -1,15 +1,11 @@
 package com.example.ble_radar.ui.scanner
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.ble_radar.data.local.BleDatabase
-import com.example.ble_radar.data.local.BleLocalDataSourceImpl
 import com.example.ble_radar.data.model.BleSignalLevel
 import com.example.ble_radar.data.repository.BleDeviceRepository
-import com.example.ble_radar.data.repository.BleDeviceRepositoryImpl
-import com.example.ble_radar.data.scanner.AndroidBleScannerDataSource
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +14,8 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class ScannerViewModel(
+@HiltViewModel
+class ScannerViewModel @Inject constructor(
   private val repository: BleDeviceRepository,
 ) : ViewModel() {
 
@@ -35,11 +32,9 @@ class ScannerViewModel(
   private var scanJob: Job? = null
 
   init {
-    // Collect existing devices persisted in local Room DB on start
     viewModelScope.launch {
       repository.getSavedDevices().collect { savedList ->
         _uiState.update { current ->
-          // If we are not currently active in a live scan or devices list is empty, initialize from DB
           if (current.devices.isEmpty() && savedList.isNotEmpty()) {
             current.copy(
               devices = savedList.map { it.toBleDeviceItem() },
@@ -103,10 +98,8 @@ class ScannerViewModel(
             val newItem = discovered.toBleDeviceItem()
 
             if (existingIndex >= 0) {
-              // Update existing unique device with latest RSSI and distance
               updatedList[existingIndex] = newItem
             } else {
-              // Add newly discovered device at top
               updatedList.add(0, newItem)
             }
 
@@ -238,17 +231,5 @@ class ScannerViewModel(
         isUnknown = true,
       ),
     )
-
-    fun createFactory(context: Context): ViewModelProvider.Factory =
-      object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-          val db = BleDatabase.getDatabase(context)
-          val localDataSource = BleLocalDataSourceImpl(db.bleDeviceDao())
-          val scannerDataSource = AndroidBleScannerDataSource(context)
-          val repository = BleDeviceRepositoryImpl(scannerDataSource, localDataSource)
-          return ScannerViewModel(repository) as T
-        }
-      }
   }
 }

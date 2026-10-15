@@ -1,15 +1,12 @@
 package com.example.ble_radar.ui.target
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.ble_radar.data.local.BleDatabase
-import com.example.ble_radar.data.local.BleLocalDataSourceImpl
-import com.example.ble_radar.data.model.BleSignalLevel
 import com.example.ble_radar.data.repository.BleDeviceRepository
-import com.example.ble_radar.data.repository.BleDeviceRepositoryImpl
-import com.example.ble_radar.data.scanner.AndroidBleScannerDataSource
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,10 +15,16 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class RadarTargetViewModel(
-  private val targetMacAddress: String,
+@HiltViewModel(assistedFactory = RadarTargetViewModel.Factory::class)
+class RadarTargetViewModel @AssistedInject constructor(
+  @Assisted private val targetMacAddress: String,
   private val repository: BleDeviceRepository,
 ) : ViewModel() {
+
+  @AssistedFactory
+  interface Factory {
+    fun create(targetMacAddress: String): RadarTargetViewModel
+  }
 
   private val _uiState = MutableStateFlow(
     RadarTargetUiState(
@@ -33,7 +36,6 @@ class RadarTargetViewModel(
   private var trackingJob: Job? = null
 
   init {
-    // 1. Observe cached device data from local Room DB
     viewModelScope.launch {
       repository.observeDevice(targetMacAddress).collect { cached ->
         if (cached != null) {
@@ -50,7 +52,6 @@ class RadarTargetViewModel(
       }
     }
 
-    // 2. Start continuous scanning for real-time target telemetry updates
     startTracking()
   }
 
@@ -136,19 +137,5 @@ class RadarTargetViewModel(
   override fun onCleared() {
     super.onCleared()
     stopTracking()
-  }
-
-  companion object {
-    fun createFactory(targetMacAddress: String, context: Context): ViewModelProvider.Factory =
-      object : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-          val db = BleDatabase.getDatabase(context)
-          val localDataSource = BleLocalDataSourceImpl(db.bleDeviceDao())
-          val scannerDataSource = AndroidBleScannerDataSource(context)
-          val repository = BleDeviceRepositoryImpl(scannerDataSource, localDataSource)
-          return RadarTargetViewModel(targetMacAddress, repository) as T
-        }
-      }
   }
 }

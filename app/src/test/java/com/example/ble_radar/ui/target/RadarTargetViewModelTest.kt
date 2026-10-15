@@ -44,7 +44,6 @@ class RadarTargetViewModelTest {
 
   @Test
   fun init_loadsCachedDataFromDbAndStartsContinuousTracking() = runTest {
-    // Pre-populate DB with cached device
     fakeRepository.saveDevice(
       DiscoveredDevice(
         macAddress = targetMac,
@@ -72,7 +71,6 @@ class RadarTargetViewModelTest {
     advanceUntilIdle()
     assertTrue(viewModel.uiState.value.isScanning)
 
-    // Simulate device coming very close: -25 dBm (< 1m)
     val closePacket = DiscoveredDevice(
       macAddress = targetMac,
       name = "Nordic Dongle",
@@ -87,7 +85,6 @@ class RadarTargetViewModelTest {
     assertEquals("< 1 meter", closeState.estimatedDistance)
     assertEquals(BleSignalLevel.VERY_STRONG, closeState.signalLevel)
 
-    // Simulate device moving farther away: -75 dBm (10 - 20m)
     val farPacket = DiscoveredDevice(
       macAddress = targetMac,
       name = "Nordic Dongle",
@@ -102,7 +99,6 @@ class RadarTargetViewModelTest {
     assertEquals("10 – 20 meters", farState.estimatedDistance)
     assertEquals(BleSignalLevel.WEAK, farState.signalLevel)
 
-    // Simulate signal lost: -95 dBm
     val lostPacket = DiscoveredDevice(
       macAddress = targetMac,
       name = "Nordic Dongle",

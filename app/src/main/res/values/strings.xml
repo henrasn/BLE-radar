@@ -1,3 +1,69 @@
 <resources>
-    <string name="app_name">ble-radar</string>
+    <string name="app_name">BLE Radar</string>
+
+    <string name="title_ble_pulse_radar">BLE Pulse Radar</string>
+    <string name="title_radar_view">Radar View</string>
+    <string name="action_back">Back</string>
+    <string name="nav_scanner">Scanner</string>
+    <string name="nav_history">History</string>
+
+    <string name="status_prefix">STATUS: </string>
+    <string name="status_scanning">SCANNING: </string>
+    <string name="status_scanner_active">Scanner Active</string>
+    <string name="status_scanner_standby">Scanner Standby</string>
+    <string name="status_ready">READY (PRESS START)</string>
+    <string name="status_paused_saved">PAUSED (%1$d SAVED)</string>
+    <string name="status_scanning_found">SCANNING: %1$d FOUND</string>
+    <string name="status_devices_count">%1$d DEVICES</string>
+    <string name="status_found_count">%1$d Found</string>
+    <string name="status_found_suffix"> FOUND</string>
+
+    <string name="btn_start">START</string>
+    <string name="btn_stop">STOP</string>
+
+    <string name="search_hint_default">Search Name, MAC, or UUID...</string>
+    <string name="search_hint_device_name">Search Device Name...</string>
+    <string name="search_hint_mac_address">Search MAC Address...</string>
+    <string name="search_hint_rssi">Search Signal Strength (RSSI)...</string>
+    <string name="content_desc_clear_search">Clear search</string>
+    <string name="content_desc_search_filter">Search filter</string>
+    <string name="content_desc_reset_filter">Reset filter</string>
+    <string name="content_desc_dismiss_error">Dismiss error</string>
+    <string name="search_filter_title">Search Filter</string>
+    <string name="filter_badge">Filter: %1$s</string>
+    <string name="select_distance_signal_strength">Select Distance / Signal Strength:</string>
+    <string name="filter_target_all">All</string>
+    <string name="filter_target_device_name">Device Name</string>
+    <string name="filter_target_mac_address">MAC Address</string>
+    <string name="filter_target_rssi">Signal Strength (RSSI)</string>
+
+    <string name="header_detected_devices">DETECTED DEVICES LIST</string>
+    <string name="label_mac_prefix">MAC:</string>
+    <string name="label_uuid_prefix">UUID:</string>
+    <string name="label_est_distance">Est. Distance: %1$s</string>
+    <string name="unit_dbm">%1$d dBm</string>
+    <string name="empty_no_devices">No devices detected yet</string>
+    <string name="empty_no_matching_devices">No matching devices found</string>
+
+    <string name="target_tracking_active">Continuous Tracking Active</string>
+    <string name="target_tracking_paused">Tracking Paused</string>
+    <string name="target_tracking_active_desc">Continuously refreshing RSSI &amp; distance</string>
+    <string name="target_tracking_paused_desc">Press START to resume live telemetry</string>
+    <string name="header_raw_rssi">RAW RSSI</string>
+    <string name="header_est_distance">ESTIMATED DISTANCE</string>
+    <string name="header_signal_category">Signal Level Category</string>
+    <string name="badge_live">LIVE</string>
+    <string name="badge_paused">PAUSED</string>
+    <string name="legend_close">-10 dBm (Close)</string>
+    <string name="legend_mid">-60 dBm</string>
+    <string name="legend_far">-90 dBm (Far)</string>
+    <string name="label_dbm_unit">dBm</string>
+    <string name="target_mac_format">MAC: %1$s</string>
+
+    <string name="error_permission_required">Bluetooth and Location permissions are required to scan for devices.</string>
+    <string name="error_bluetooth_disabled">Bluetooth is disabled. Please turn on Bluetooth on your device.</string>
+    <string name="error_permission_denied_scan">Bluetooth permission was denied. Cannot start scanning.</string>
+    <string name="error_permission_denied_track">Bluetooth permission was denied. Cannot track target.</string>
+    <string name="error_ble_scan_failed">An error occurred during BLE scanning</string>
+    <string name="error_target_scan_failed">An error occurred during target BLE scanning</string>
 </resources>

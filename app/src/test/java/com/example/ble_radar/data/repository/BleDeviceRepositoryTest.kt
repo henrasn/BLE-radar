@@ -124,7 +124,6 @@ class BleDeviceRepositoryTest {
     advanceUntilIdle()
     assertTrue(repository.isScanning.first())
 
-    // Emit packet for a DIFFERENT device
     fakeScannerDataSource.emit(
       DiscoveredDevice(
         macAddress = "FF:EE:DD:00:11:22",
@@ -135,10 +134,8 @@ class BleDeviceRepositoryTest {
     )
     advanceUntilIdle()
     assertEquals(0, emittedTargetDevices.size)
-    // But it was saved to DB
     assertEquals(1, fakeLocalDataSource.savedList.size)
 
-    // Emit packet for TARGET device
     fakeScannerDataSource.emit(
       DiscoveredDevice(
         macAddress = "AA:BB:CC:11:22:33",

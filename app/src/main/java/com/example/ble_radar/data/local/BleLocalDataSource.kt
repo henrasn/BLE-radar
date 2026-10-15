@@ -1,6 +1,7 @@
 package com.example.ble_radar.data.local
 
 import com.example.ble_radar.data.model.DiscoveredDevice
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -14,7 +15,7 @@ interface BleLocalDataSource {
   suspend fun clearAll()
 }
 
-class BleLocalDataSourceImpl(
+class BleLocalDataSourceImpl @Inject constructor(
   private val dao: BleDeviceDao,
 ) : BleLocalDataSource {
 

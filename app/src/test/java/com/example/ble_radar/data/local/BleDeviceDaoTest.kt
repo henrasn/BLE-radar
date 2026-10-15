@@ -12,7 +12,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
@@ -51,7 +50,6 @@ class BleDeviceDaoTest {
     assertEquals(1, list1.size)
     assertEquals(-60, list1[0].rssi)
 
-    // Upsert with same MAC address updates the entity instead of inserting duplicate
     val device1Updated = BleDeviceEntity(
       macAddress = "E4:5F:01:9B:4A:2C",
       name = "Nordic Dongle",

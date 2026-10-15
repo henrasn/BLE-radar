@@ -50,11 +50,9 @@ val RadarOnError = Color(0xFF690005)
 val RadarErrorContainer = Color(0xFF93000A)
 val RadarOnErrorContainer = Color(0xFFFFDAD6)
 
-// Calibrated RSSI Distance Signal Bar Colors
-val SignalVeryStrong = Color(0xFF22C55E) // Bright Green (< 1m)
-val SignalStrong = Color(0xFF84CC16)     // Lime Green (1–3m)
-val SignalModerate = Color(0xFFEAB308)   // Yellow (3–10m)
-val SignalWeak = Color(0xFFF97316)       // Orange (10–20m)
-val SignalVeryWeak = Color(0xFFEF4444)   // Red (> 20m)
-val SignalLost = Color(0xFF313540)       // Dark / Disconnected Surface
-
+val SignalVeryStrong = Color(0xFF22C55E)
+val SignalStrong = Color(0xFF84CC16)
+val SignalModerate = Color(0xFFEAB308)
+val SignalWeak = Color(0xFFF97316)
+val SignalVeryWeak = Color(0xFFEF4444)
+val SignalLost = Color(0xFF313540)

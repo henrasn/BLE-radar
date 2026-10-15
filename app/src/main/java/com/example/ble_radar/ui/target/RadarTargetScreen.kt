@@ -59,9 +59,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -69,8 +69,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ble_radar.R
 import com.example.ble_radar.data.model.BleSignalLevel
 import com.example.ble_radar.theme.BleRadarTheme
 import com.example.ble_radar.theme.RadarOnPrimaryContainer
@@ -84,7 +85,6 @@ import com.example.ble_radar.theme.RadarPrimaryContainer
 import com.example.ble_radar.theme.RadarSecondary
 import com.example.ble_radar.theme.RadarSecondaryContainer
 import com.example.ble_radar.theme.RadarSurface
-import com.example.ble_radar.theme.RadarSurfaceContainer
 import com.example.ble_radar.theme.RadarSurfaceContainerHigh
 import com.example.ble_radar.theme.RadarSurfaceContainerHighest
 import com.example.ble_radar.theme.RadarSurfaceContainerLow
@@ -96,21 +96,17 @@ import com.example.ble_radar.theme.SignalStrong
 import com.example.ble_radar.theme.SignalVeryStrong
 import com.example.ble_radar.theme.SignalVeryWeak
 import com.example.ble_radar.theme.SignalWeak
-import com.example.ble_radar.ui.scanner.ScannerNavTab
 import com.example.ble_radar.ui.scanner.barColor
 
-/**
- * Stateful compose screen managing ViewModel lifecycle and permission callbacks
- * for intensive continuous target tracking.
- * Represents Stitch screen 25e4afbbd106422fa6da7c7b6b763ef4 ("Radar Target - Pelacakan Intensif").
- */
 @Composable
 fun RadarTargetScreen(
   macAddress: String,
   modifier: Modifier = Modifier,
-  viewModel: RadarTargetViewModel = viewModel(
+  viewModel: RadarTargetViewModel = hiltViewModel(
     key = macAddress,
-    factory = RadarTargetViewModel.createFactory(macAddress, LocalContext.current),
+    creationCallback = { factory: RadarTargetViewModel.Factory ->
+      factory.create(macAddress)
+    },
   ),
   onBackClick: () -> Unit = {},
   onNavigateToScanner: () -> Unit = {},
@@ -163,9 +159,6 @@ fun RadarTargetScreen(
   )
 }
 
-/**
- * Stateless compose content displaying the intensive radar target tracking UI.
- */
 @Composable
 fun RadarTargetContent(
   uiState: RadarTargetUiState,
@@ -204,7 +197,6 @@ fun RadarTargetContent(
       ),
       verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-      // Error Banner
       if (uiState.errorMessage != null) {
         item(key = "error_banner") {
           Surface(
@@ -231,7 +223,7 @@ fun RadarTargetContent(
               ) {
                 Icon(
                   imageVector = Icons.Default.Close,
-                  contentDescription = "Dismiss error",
+                  contentDescription = stringResource(R.string.content_desc_dismiss_error),
                   tint = MaterialTheme.colorScheme.onErrorContainer,
                   modifier = Modifier.size(16.dp),
                 )
@@ -241,7 +233,6 @@ fun RadarTargetContent(
         }
       }
 
-      // Hardware Tracking Target Header Banner
       item(key = "target_header") {
         TargetHeaderBanner(
           deviceName = uiState.deviceName,
@@ -251,7 +242,6 @@ fun RadarTargetContent(
         )
       }
 
-      // Primary Telemetry Metrics Card with Multi-Segment Color Bar
       item(key = "telemetry_metrics") {
         PrimaryTelemetryCard(
           rssi = uiState.rssi,
@@ -261,7 +251,6 @@ fun RadarTargetContent(
         )
       }
 
-      // Tracking Control Button (START / STOP)
       item(key = "tracking_controls") {
         TrackingControlsCard(
           isScanning = uiState.isScanning,
@@ -272,9 +261,6 @@ fun RadarTargetContent(
   }
 }
 
-/**
- * Top App Bar with back arrow, "Radar View" title, and pulsing live indicator.
- */
 @Composable
 fun RadarTargetTopBar(
   isLive: Boolean,
@@ -305,14 +291,14 @@ fun RadarTargetTopBar(
         ) {
           Icon(
             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-            contentDescription = "Back",
+            contentDescription = stringResource(R.string.action_back),
             tint = RadarPrimary,
             modifier = Modifier.size(22.dp),
           )
         }
 
         Text(
-          text = "Radar View",
+          text = stringResource(R.string.title_radar_view),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
           color = RadarPrimary,
@@ -327,9 +313,6 @@ fun RadarTargetTopBar(
   }
 }
 
-/**
- * Pulsing live beacon dot indicator.
- */
 @Composable
 fun LiveBeaconPulseDot(
   modifier: Modifier = Modifier,
@@ -373,9 +356,6 @@ fun LiveBeaconPulseDot(
   }
 }
 
-/**
- * Hardware Tracking Target Header Banner card.
- */
 @Composable
 fun TargetHeaderBanner(
   deviceName: String,
@@ -396,7 +376,6 @@ fun TargetHeaderBanner(
         .fillMaxWidth()
         .padding(18.dp),
     ) {
-      // Top-right Live / Paused Pill Badge
       Surface(
         shape = CircleShape,
         color = if (isLive) RadarSecondaryContainer.copy(alpha = 0.20f) else RadarSurfaceContainerHighest,
@@ -416,7 +395,7 @@ fun TargetHeaderBanner(
               ),
           )
           Text(
-            text = if (isLive) "LIVE" else "PAUSED",
+            text = if (isLive) stringResource(R.string.badge_live) else stringResource(R.string.badge_paused),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
@@ -426,7 +405,6 @@ fun TargetHeaderBanner(
         }
       }
 
-      // Center Information Stack
       Column(
         modifier = Modifier
           .fillMaxWidth()
@@ -434,7 +412,6 @@ fun TargetHeaderBanner(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp),
       ) {
-        // Icon container with cyan glowing backdrop
         Box(
           modifier = Modifier
             .size(64.dp)
@@ -451,7 +428,6 @@ fun TargetHeaderBanner(
           )
         }
 
-        // Target Name
         Text(
           text = deviceName,
           style = MaterialTheme.typography.titleLarge,
@@ -461,14 +437,13 @@ fun TargetHeaderBanner(
           overflow = TextOverflow.Ellipsis,
         )
 
-        // MAC Address Capsule Badge
         Surface(
           shape = CircleShape,
           color = RadarSurfaceContainerLowest.copy(alpha = 0.80f),
           border = BorderStroke(1.dp, RadarOutlineVariant.copy(alpha = 0.35f)),
         ) {
           Text(
-            text = "MAC: $macAddress",
+            text = stringResource(R.string.target_mac_format, macAddress),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             color = RadarOnSurfaceVariant,
@@ -480,9 +455,6 @@ fun TargetHeaderBanner(
   }
 }
 
-/**
- * Primary Telemetry Metrics Row and 6-segment distance bar.
- */
 @Composable
 fun PrimaryTelemetryCard(
   rssi: Int,
@@ -510,13 +482,11 @@ fun PrimaryTelemetryCard(
         .padding(16.dp),
       verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-      // Top Telemetry Metrics Row (RSSI on left, Distance on right)
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
       ) {
-        // Left: RAW RSSI
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
           Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -529,7 +499,7 @@ fun PrimaryTelemetryCard(
               modifier = Modifier.size(18.dp),
             )
             Text(
-              text = "RAW RSSI",
+              text = stringResource(R.string.header_raw_rssi),
               style = MaterialTheme.typography.labelSmall,
               fontFamily = FontFamily.Monospace,
               color = RadarOnSurfaceVariant,
@@ -549,7 +519,7 @@ fun PrimaryTelemetryCard(
               color = levelColor,
             )
             Text(
-              text = "dBm",
+              text = stringResource(R.string.label_dbm_unit),
               style = MaterialTheme.typography.titleMedium,
               fontFamily = FontFamily.Monospace,
               color = RadarOnSurface,
@@ -558,7 +528,6 @@ fun PrimaryTelemetryCard(
           }
         }
 
-        // Right: ESTIMATED DISTANCE
         Column(
           horizontalAlignment = Alignment.End,
           verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -574,7 +543,7 @@ fun PrimaryTelemetryCard(
               modifier = Modifier.size(18.dp),
             )
             Text(
-              text = "ESTIMATED DISTANCE",
+              text = stringResource(R.string.header_est_distance),
               style = MaterialTheme.typography.labelSmall,
               fontFamily = FontFamily.Monospace,
               color = RadarOnSurfaceVariant,
@@ -592,7 +561,6 @@ fun PrimaryTelemetryCard(
         }
       }
 
-      // Divider Line
       Box(
         modifier = Modifier
           .fillMaxWidth()
@@ -600,7 +568,6 @@ fun PrimaryTelemetryCard(
           .background(RadarOutlineVariant.copy(alpha = 0.35f)),
       )
 
-      // Signal Level Category Label Row
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -617,7 +584,7 @@ fun PrimaryTelemetryCard(
             modifier = Modifier.size(16.dp),
           )
           Text(
-            text = "Signal Level Category",
+            text = stringResource(R.string.header_signal_category),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             color = RadarOnSurfaceVariant,
@@ -645,29 +612,27 @@ fun PrimaryTelemetryCard(
         }
       }
 
-      // Multi-Segment Calibrated Distance Bar
       SignalStrengthBar(signalLevel = signalLevel)
 
-      // Range Legend Labels
       Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
       ) {
         Text(
-          text = "-90 dBm (Far)",
+          text = stringResource(R.string.legend_far),
           style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
           fontFamily = FontFamily.Monospace,
           color = SignalVeryWeak,
         )
         Text(
-          text = "-60 dBm",
+          text = stringResource(R.string.legend_mid),
           style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
           fontFamily = FontFamily.Monospace,
           color = SignalModerate,
         )
         Text(
-          text = "-10 dBm (Close)",
+          text = stringResource(R.string.legend_close),
           style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp),
           fontFamily = FontFamily.Monospace,
           color = SignalVeryStrong,
@@ -677,21 +642,11 @@ fun PrimaryTelemetryCard(
   }
 }
 
-/**
- * 6-segment calibrated distance signal bar representing dBm ranges:
- * 1. Very Weak (> 20m)   [-80 to -90 dBm]: Red
- * 2. Weak (10–20m)       [-70 to -80 dBm]: Orange
- * 3. Moderate (3–10m)    [-50 to -70 dBm]: Yellow
- * 4. Strong (1–3m)       [-30 to -50 dBm]: Lime Green
- * 5. Very Strong (< 1m)  [-10 to -30 dBm]: Bright Green
- * 6. Lost / Disconnected [< -90 dBm]: Inactive
- */
 @Composable
 fun SignalStrengthBar(
   signalLevel: BleSignalLevel,
   modifier: Modifier = Modifier,
 ) {
-  // Ordered from farthest (Very Weak) to closest (Very Strong)
   val segmentConfigs = listOf(
     Pair(SignalVeryWeak, BleSignalLevel.VERY_WEAK),
     Pair(SignalWeak, BleSignalLevel.WEAK),
@@ -700,7 +655,6 @@ fun SignalStrengthBar(
     Pair(SignalVeryStrong, BleSignalLevel.VERY_STRONG),
   )
 
-  // Rank of current level: LOST=0, VERY_WEAK=1, WEAK=2, MODERATE=3, STRONG=4, VERY_STRONG=5
   val currentRank = when (signalLevel) {
     BleSignalLevel.LOST -> 0
     BleSignalLevel.VERY_WEAK -> 1
@@ -748,7 +702,6 @@ fun SignalStrengthBar(
         )
       }
 
-      // Sixth segment: Disconnected indicator
       val isLost = signalLevel == BleSignalLevel.LOST
       Box(
         modifier = Modifier
@@ -772,9 +725,6 @@ fun SignalStrengthBar(
   }
 }
 
-/**
- * Control action card (START / STOP continuous tracking toggle).
- */
 @Composable
 fun TrackingControlsCard(
   isScanning: Boolean,
@@ -799,13 +749,13 @@ fun TrackingControlsCard(
         verticalArrangement = Arrangement.spacedBy(4.dp),
       ) {
         Text(
-          text = if (isScanning) "Continuous Tracking Active" else "Tracking Paused",
+          text = if (isScanning) stringResource(R.string.target_tracking_active) else stringResource(R.string.target_tracking_paused),
           style = MaterialTheme.typography.titleSmall,
           fontWeight = FontWeight.SemiBold,
           color = RadarOnSurface,
         )
         Text(
-          text = if (isScanning) "Continuously refreshing RSSI & distance" else "Press START to resume live telemetry",
+          text = if (isScanning) stringResource(R.string.target_tracking_active_desc) else stringResource(R.string.target_tracking_paused_desc),
           style = MaterialTheme.typography.labelSmall,
           color = RadarOnSurfaceVariant,
         )
@@ -830,7 +780,7 @@ fun TrackingControlsCard(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-          text = if (isScanning) "STOP" else "START",
+          text = if (isScanning) stringResource(R.string.btn_stop) else stringResource(R.string.btn_start),
           style = MaterialTheme.typography.labelMedium,
           fontWeight = FontWeight.Bold,
           fontFamily = FontFamily.Monospace,
@@ -840,9 +790,6 @@ fun TrackingControlsCard(
   }
 }
 
-/**
- * Bottom navigation bar with Scanner and History tabs.
- */
 @Composable
 fun RadarTargetBottomNavBar(
   onScannerClick: () -> Unit,
@@ -863,7 +810,6 @@ fun RadarTargetBottomNavBar(
       horizontalArrangement = Arrangement.SpaceAround,
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      // Scanner Tab
       Box(
         modifier = Modifier
           .weight(1f)
@@ -879,13 +825,13 @@ fun RadarTargetBottomNavBar(
         ) {
           Icon(
             imageVector = Icons.Default.Radar,
-            contentDescription = "Scanner",
+            contentDescription = stringResource(R.string.nav_scanner),
             tint = RadarPrimaryContainer,
             modifier = Modifier.size(22.dp),
           )
           Spacer(modifier = Modifier.height(2.dp))
           Text(
-            text = "SCANNER",
+            text = stringResource(R.string.nav_scanner).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             letterSpacing = 0.8.sp,
@@ -896,7 +842,6 @@ fun RadarTargetBottomNavBar(
 
       Spacer(modifier = Modifier.width(8.dp))
 
-      // History Tab
       Box(
         modifier = Modifier
           .weight(1f)
@@ -912,13 +857,13 @@ fun RadarTargetBottomNavBar(
         ) {
           Icon(
             imageVector = Icons.Default.History,
-            contentDescription = "History",
+            contentDescription = stringResource(R.string.nav_history),
             tint = RadarOnSurfaceVariant,
             modifier = Modifier.size(22.dp),
           )
           Spacer(modifier = Modifier.height(2.dp))
           Text(
-            text = "HISTORY",
+            text = stringResource(R.string.nav_history).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             letterSpacing = 0.8.sp,
@@ -929,10 +874,6 @@ fun RadarTargetBottomNavBar(
     }
   }
 }
-
-// ==========================================
-// Previews
-// ==========================================
 
 @Preview(name = "Radar Target - Very Strong (< 1m)", showBackground = true)
 @Composable

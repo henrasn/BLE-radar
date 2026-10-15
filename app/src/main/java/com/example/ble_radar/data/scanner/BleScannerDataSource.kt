@@ -12,6 +12,8 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.content.ContextCompat
 import com.example.ble_radar.data.model.DiscoveredDevice
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -23,8 +25,8 @@ interface BleScannerDataSource {
   fun stopScan()
 }
 
-class AndroidBleScannerDataSource(
-  private val context: Context,
+class AndroidBleScannerDataSource @Inject constructor(
+  @param:ApplicationContext private val context: Context,
 ) : BleScannerDataSource {
 
   private val bluetoothManager: BluetoothManager? by lazy {

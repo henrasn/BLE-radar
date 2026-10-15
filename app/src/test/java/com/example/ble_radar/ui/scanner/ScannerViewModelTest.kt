@@ -54,34 +54,28 @@ class ScannerViewModelTest {
 
   @Test
   fun distanceClassification_matchesUserSpecifiedRanges() {
-    // -10 to -30 dBm Very Strong (Very Close) < 1 meter
     assertEquals("< 1 meter", DiscoveredDevice.calculateDistance(-10))
     assertEquals("< 1 meter", DiscoveredDevice.calculateDistance(-25))
     assertEquals("< 1 meter", DiscoveredDevice.calculateDistance(-30))
     assertEquals(BleSignalLevel.VERY_STRONG, BleSignalLevel.fromRssi(-28))
 
-    // -30 to -50 dBm Strong (Close) 1 – 3 meters
     assertEquals("1 – 3 meters", DiscoveredDevice.calculateDistance(-31))
     assertEquals("1 – 3 meters", DiscoveredDevice.calculateDistance(-45))
     assertEquals("1 – 3 meters", DiscoveredDevice.calculateDistance(-50))
     assertEquals(BleSignalLevel.STRONG, BleSignalLevel.fromRssi(-42))
 
-    // -50 to -70 dBm Moderate / Good 3 – 10 meters
     assertEquals("3 – 10 meters", DiscoveredDevice.calculateDistance(-55))
     assertEquals("3 – 10 meters", DiscoveredDevice.calculateDistance(-70))
     assertEquals(BleSignalLevel.MODERATE, BleSignalLevel.fromRssi(-64))
 
-    // -70 to -80 dBm Weak 10 – 20 meters
     assertEquals("10 – 20 meters", DiscoveredDevice.calculateDistance(-71))
     assertEquals("10 – 20 meters", DiscoveredDevice.calculateDistance(-80))
     assertEquals(BleSignalLevel.WEAK, BleSignalLevel.fromRssi(-74))
 
-    // -80 to -90 dBm Very Weak / Intermittent > 20 meters (Out of range threshold)
     assertEquals("> 20 meters", DiscoveredDevice.calculateDistance(-81))
     assertEquals("> 20 meters", DiscoveredDevice.calculateDistance(-90))
     assertEquals(BleSignalLevel.VERY_WEAK, BleSignalLevel.fromRssi(-86))
 
-    // < -90 dBm Signal Lost (Disconnected / Out of range)
     assertEquals("Disconnected", DiscoveredDevice.calculateDistance(-91))
     assertEquals("Disconnected", DiscoveredDevice.calculateDistance(-99))
     assertEquals(BleSignalLevel.LOST, BleSignalLevel.fromRssi(-95))
@@ -93,7 +87,6 @@ class ScannerViewModelTest {
     advanceUntilIdle()
     assertTrue(viewModel.uiState.value.isScanning)
 
-    // Simulate discovering first device
     val device1 = DiscoveredDevice(
       macAddress = "AA:BB:CC:DD:EE:01",
       name = "Beacon Sensor 1",
@@ -107,11 +100,9 @@ class ScannerViewModelTest {
     assertEquals("AA:BB:CC:DD:EE:01", viewModel.uiState.value.devices[0].macAddress)
     assertEquals(-25, viewModel.uiState.value.devices[0].rssi)
 
-    // Verify it was saved to DB
     assertEquals(1, fakeRepository.savedDevicesList.size)
     assertEquals("AA:BB:CC:DD:EE:01", fakeRepository.savedDevicesList[0].macAddress)
 
-    // Simulate discovering the SAME MAC address with updated RSSI
     val device1Updated = DiscoveredDevice(
       macAddress = "AA:BB:CC:DD:EE:01",
       name = "Beacon Sensor 1",
@@ -121,16 +112,13 @@ class ScannerViewModelTest {
     fakeRepository.discoveryChannel.send(device1Updated)
     advanceUntilIdle()
 
-    // Must still have only 1 unique device, but updated values
     assertEquals(1, viewModel.uiState.value.devices.size)
     assertEquals(-40, viewModel.uiState.value.devices[0].rssi)
     assertEquals("1 – 3 meters", viewModel.uiState.value.devices[0].estimatedDistance)
 
-    // DB must also have unique entry
     assertEquals(1, fakeRepository.savedDevicesList.size)
     assertEquals(-40, fakeRepository.savedDevicesList[0].rssi)
 
-    // Simulate discovering a second device with a different MAC
     val device2 = DiscoveredDevice(
       macAddress = "11:22:33:44:55:66",
       name = "Smart Tag",
@@ -143,7 +131,6 @@ class ScannerViewModelTest {
     assertEquals(2, viewModel.uiState.value.devices.size)
     assertEquals(2, fakeRepository.savedDevicesList.size)
 
-    // Stop scan
     viewModel.stopScan()
     advanceUntilIdle()
     assertFalse(viewModel.uiState.value.isScanning)
@@ -194,7 +181,7 @@ class ScannerViewModelTest {
       DiscoveredDevice(
         macAddress = "AA:BB:CC:DD:EE:01",
         name = "Nordic Beacon",
-        rssi = -25, // VERY_STRONG (< 1m)
+        rssi = -25,
         estimatedDistance = "< 1 meter",
       ),
     )
@@ -202,7 +189,7 @@ class ScannerViewModelTest {
       DiscoveredDevice(
         macAddress = "11:22:33:44:55:66",
         name = "Apple Watch",
-        rssi = -65, // MODERATE (3 - 10m)
+        rssi = -65,
         estimatedDistance = "3 – 10 meters",
       ),
     )
@@ -210,7 +197,7 @@ class ScannerViewModelTest {
       DiscoveredDevice(
         macAddress = "99:88:77:66:55:44",
         name = "AirTag Beacon",
-        rssi = -85, // VERY_WEAK (> 20m)
+        rssi = -85,
         estimatedDistance = "> 20 meters",
       ),
     )
@@ -218,25 +205,21 @@ class ScannerViewModelTest {
 
     assertEquals(3, viewModel.uiState.value.devices.size)
 
-    // 1. Text filter by Name
     viewModel.setFilterTarget(SearchFilterTarget.DEVICE_NAME)
     viewModel.updateSearchQuery("Watch")
     assertEquals(1, viewModel.uiState.value.filteredDevices.size)
     assertEquals("Apple Watch", viewModel.uiState.value.filteredDevices[0].name)
 
-    // 2. Text filter by MAC Address
     viewModel.setFilterTarget(SearchFilterTarget.MAC_ADDRESS)
     viewModel.updateSearchQuery("99:88")
     assertEquals(1, viewModel.uiState.value.filteredDevices.size)
     assertEquals("AirTag Beacon", viewModel.uiState.value.filteredDevices[0].name)
 
-    // 3. Signal Level filter
     viewModel.clearSearchQuery()
     viewModel.setSignalLevelFilter(BleSignalLevel.VERY_STRONG)
     assertEquals(1, viewModel.uiState.value.filteredDevices.size)
     assertEquals("Nordic Beacon", viewModel.uiState.value.filteredDevices[0].name)
 
-    // Reset filter
     viewModel.resetFilter()
     assertEquals(3, viewModel.uiState.value.filteredDevices.size)
   }

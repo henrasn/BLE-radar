@@ -3,6 +3,7 @@ package com.example.ble_radar.data.repository
 import com.example.ble_radar.data.local.BleLocalDataSource
 import com.example.ble_radar.data.model.DiscoveredDevice
 import com.example.ble_radar.data.scanner.BleScannerDataSource
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -22,7 +23,7 @@ interface BleDeviceRepository {
   fun startTargetDiscovery(macAddress: String): Flow<DiscoveredDevice>
 }
 
-class BleDeviceRepositoryImpl(
+class BleDeviceRepositoryImpl @Inject constructor(
   private val scannerDataSource: BleScannerDataSource,
   private val localDataSource: BleLocalDataSource,
 ) : BleDeviceRepository {
@@ -38,9 +39,7 @@ class BleDeviceRepositoryImpl(
     _isScanning.value = true
     try {
       scannerDataSource.startScan().collect { device ->
-        // Persist to Room local database with unique MAC address
         localDataSource.saveDevice(device)
-        // Emit into discovery stream for real-time UI consumption
         send(device)
       }
     } finally {
@@ -52,9 +51,7 @@ class BleDeviceRepositoryImpl(
     _isScanning.value = true
     try {
       scannerDataSource.startScan().collect { device ->
-        // Persist all incoming packets to Room local DB
         localDataSource.saveDevice(device)
-        // If packet matches the target MAC address, emit to subscriber
         if (device.macAddress.equals(macAddress, ignoreCase = true)) {
           send(device)
         }

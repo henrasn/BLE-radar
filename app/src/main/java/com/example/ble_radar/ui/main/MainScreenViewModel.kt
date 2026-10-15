@@ -4,13 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.ble_radar.data.DataRepository
 import com.example.ble_radar.ui.main.MainScreenUiState.Success
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
-class MainScreenViewModel(dataRepository: DataRepository) : ViewModel() {
+@HiltViewModel
+class MainScreenViewModel @Inject constructor(
+  dataRepository: DataRepository,
+) : ViewModel() {
   val uiState: StateFlow<MainScreenUiState> =
     dataRepository.data
       .map<List<String>, MainScreenUiState>(::Success)
