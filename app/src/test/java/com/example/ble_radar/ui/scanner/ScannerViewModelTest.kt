@@ -276,6 +276,23 @@ private class FakeBleDeviceRepository : BleDeviceRepository {
 
   override fun getSavedDeviceCount(): Flow<Int> = _savedDevicesFlow.map { it.size }
 
+  override fun observeDevice(macAddress: String): Flow<DiscoveredDevice?> {
+    return _savedDevicesFlow.map { list -> list.find { it.macAddress.equals(macAddress, ignoreCase = true) } }
+  }
+
+  override fun startTargetDiscovery(macAddress: String): Flow<DiscoveredDevice> = flow {
+    _isScanning.value = true
+    try {
+      for (device in discoveryChannel) {
+        if (device.macAddress.equals(macAddress, ignoreCase = true)) {
+          emit(device)
+        }
+      }
+    } finally {
+      _isScanning.value = false
+    }
+  }
+
   override suspend fun saveDevice(device: DiscoveredDevice) {
     val idx = savedDevicesList.indexOfFirst { it.macAddress == device.macAddress }
     if (idx >= 0) {

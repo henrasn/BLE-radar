@@ -18,6 +18,8 @@ interface BleDeviceRepository {
   fun getSavedDeviceCount(): Flow<Int>
   suspend fun saveDevice(device: DiscoveredDevice)
   suspend fun clearSavedDevices()
+  fun observeDevice(macAddress: String): Flow<DiscoveredDevice?>
+  fun startTargetDiscovery(macAddress: String): Flow<DiscoveredDevice>
 }
 
 class BleDeviceRepositoryImpl(
@@ -46,6 +48,22 @@ class BleDeviceRepositoryImpl(
     }
   }
 
+  override fun startTargetDiscovery(macAddress: String): Flow<DiscoveredDevice> = channelFlow {
+    _isScanning.value = true
+    try {
+      scannerDataSource.startScan().collect { device ->
+        // Persist all incoming packets to Room local DB
+        localDataSource.saveDevice(device)
+        // If packet matches the target MAC address, emit to subscriber
+        if (device.macAddress.equals(macAddress, ignoreCase = true)) {
+          send(device)
+        }
+      }
+    } finally {
+      _isScanning.value = false
+    }
+  }
+
   override fun stopDiscovery() {
     scannerDataSource.stopScan()
     _isScanning.value = false
@@ -57,6 +75,10 @@ class BleDeviceRepositoryImpl(
 
   override fun getSavedDeviceCount(): Flow<Int> {
     return localDataSource.getDeviceCount()
+  }
+
+  override fun observeDevice(macAddress: String): Flow<DiscoveredDevice?> {
+    return localDataSource.observeDevice(macAddress)
   }
 
   override suspend fun saveDevice(device: DiscoveredDevice) {

@@ -10,6 +10,7 @@ interface BleLocalDataSource {
   suspend fun saveDevice(device: DiscoveredDevice)
   suspend fun saveDevices(devices: List<DiscoveredDevice>)
   suspend fun getDevice(macAddress: String): DiscoveredDevice?
+  fun observeDevice(macAddress: String): Flow<DiscoveredDevice?>
   suspend fun clearAll()
 }
 
@@ -35,6 +36,10 @@ class BleLocalDataSourceImpl(
 
   override suspend fun getDevice(macAddress: String): DiscoveredDevice? {
     return dao.getDeviceByMac(macAddress)?.toDiscoveredDevice()
+  }
+
+  override fun observeDevice(macAddress: String): Flow<DiscoveredDevice?> {
+    return dao.observeDeviceByMac(macAddress).map { it?.toDiscoveredDevice() }
   }
 
   override suspend fun clearAll() {

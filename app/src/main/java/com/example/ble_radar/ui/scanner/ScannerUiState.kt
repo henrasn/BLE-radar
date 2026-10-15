@@ -33,6 +33,18 @@ data class BleDeviceItem(
       }
 }
 
+val BleSignalLevel.barColor: Color
+  get() =
+    when (this) {
+      BleSignalLevel.VERY_STRONG -> com.example.ble_radar.theme.SignalVeryStrong
+      BleSignalLevel.STRONG -> com.example.ble_radar.theme.SignalStrong
+      BleSignalLevel.MODERATE -> com.example.ble_radar.theme.SignalModerate
+      BleSignalLevel.WEAK -> com.example.ble_radar.theme.SignalWeak
+      BleSignalLevel.VERY_WEAK -> com.example.ble_radar.theme.SignalVeryWeak
+      BleSignalLevel.LOST -> com.example.ble_radar.theme.SignalLost
+    }
+
+
 fun DiscoveredDevice.toBleDeviceItem(): BleDeviceItem = BleDeviceItem(
   id = macAddress,
   name = name,
