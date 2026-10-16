@@ -108,7 +108,6 @@ ble-radar/
 ├── gradle/
 │   └── libs.versions.toml                    # Version catalog dependencies
 ├── build.gradle.kts                          # Root build script
-├── LICENSE                                   # MIT License
 └── README.md
 ```
 
@@ -212,20 +211,3 @@ Available build variants and the release process:
 
 - **Background Scanning Limits**: Android OS battery optimization and Doze mode restrict continuous BLE scanning in the background without a persistent Foreground Service.
 - **RF Path Loss Variance**: Physical obstacles, metallic structures, and antenna orientation can introduce signal multipath fading affecting RSSI readings.
-
-## 12. Future Improvements
-
-- [ ] Export device scan telemetry logs to CSV
-- [ ] Configurable TX power beacon calibration (1-meter offset calibration dialog)
-- [ ] RSSI signal jitter smoothing using Kalman filtering or moving averages
-- [ ] Proximity audio/haptic alert triggers when locked target moves closer
-
-## 13. Contributing
-
-Contributions are welcome.
-
-Please create an issue to discuss major changes before submitting a pull request.
-
-## 14. License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
