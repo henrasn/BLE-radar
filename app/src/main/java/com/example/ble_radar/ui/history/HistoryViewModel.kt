@@ -21,6 +21,7 @@ class HistoryViewModel @Inject constructor(
   val uiState: StateFlow<HistoryUiState> = _uiState.asStateFlow()
 
   init {
+    stopActiveDiscovery()
     viewModelScope.launch {
       repository.getSavedDevices().collect { savedList ->
         _uiState.update { current ->
@@ -31,5 +32,9 @@ class HistoryViewModel @Inject constructor(
         }
       }
     }
+  }
+
+  fun stopActiveDiscovery() {
+    repository.stopDiscovery()
   }
 }

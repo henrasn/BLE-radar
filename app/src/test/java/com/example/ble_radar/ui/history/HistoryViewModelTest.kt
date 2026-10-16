@@ -106,10 +106,28 @@ class HistoryViewModelTest {
     assertEquals(1, updatedState.devices.size)
     assertEquals("ESP32_Beacon", updatedState.devices[0].name)
   }
+
+  @Test
+  fun init_stopsActiveDiscovery() = runTest {
+    viewModel = HistoryViewModel(fakeRepository)
+    advanceUntilIdle()
+
+    assertTrue(fakeRepository.stopDiscoveryCalled)
+  }
+
+  @Test
+  fun stopActiveDiscovery_invokesRepositoryStopDiscovery() = runTest {
+    viewModel = HistoryViewModel(fakeRepository)
+    fakeRepository.stopDiscoveryCalled = false
+
+    viewModel.stopActiveDiscovery()
+    assertTrue(fakeRepository.stopDiscoveryCalled)
+  }
 }
 
 private class FakeHistoryRepository : BleDeviceRepository {
   private val _savedDevicesFlow = MutableStateFlow<List<DiscoveredDevice>>(emptyList())
+  var stopDiscoveryCalled = false
 
   fun emitSavedDevices(devices: List<DiscoveredDevice>) {
     _savedDevicesFlow.value = devices
@@ -123,7 +141,9 @@ private class FakeHistoryRepository : BleDeviceRepository {
 
   override fun startDiscovery(): Flow<DiscoveredDevice> = emptyFlow()
 
-  override fun stopDiscovery() {}
+  override fun stopDiscovery() {
+    stopDiscoveryCalled = true
+  }
 
   override fun getSavedDevices(): Flow<List<DiscoveredDevice>> = _savedDevicesFlow
 

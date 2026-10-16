@@ -51,6 +51,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +72,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ble_radar.R
 import com.example.ble_radar.theme.BleRadarTheme
@@ -101,6 +105,7 @@ fun ScannerScreen(
   onNavigateToHistory: () -> Unit = {},
 ) {
   val context = LocalContext.current
+  val lifecycleOwner = LocalLifecycleOwner.current
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
   val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -121,6 +126,19 @@ fun ScannerScreen(
   ) { results ->
     val allGranted = results.values.all { it }
     viewModel.onPermissionsResult(allGranted)
+  }
+
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_STOP) {
+        viewModel.stopScan()
+      }
+    }
+    lifecycleOwner.lifecycle.addObserver(observer)
+    onDispose {
+      lifecycleOwner.lifecycle.removeObserver(observer)
+      viewModel.stopScan()
+    }
   }
 
   ScannerContent(
@@ -149,6 +167,7 @@ fun ScannerScreen(
     onNavTabClick = { tab ->
       viewModel.selectTab(tab)
       if (tab == ScannerNavTab.HISTORY) {
+        viewModel.stopScan()
         onNavigateToHistory()
       }
     },
