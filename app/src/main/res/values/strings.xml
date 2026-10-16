@@ -60,6 +60,12 @@
     <string name="label_dbm_unit">dBm</string>
     <string name="target_mac_format">MAC: %1$s</string>
 
+    <string name="title_device_history">Device History</string>
+    <string name="label_last_saved">Last Saved: %1$s</string>
+    <string name="empty_no_saved_devices">No saved devices found in history</string>
+    <string name="time_today">Today, %1$s</string>
+    <string name="time_yesterday">Yesterday, %1$s</string>
+
     <string name="error_permission_required">Bluetooth and Location permissions are required to scan for devices.</string>
     <string name="error_bluetooth_disabled">Bluetooth is disabled. Please turn on Bluetooth on your device.</string>
     <string name="error_permission_denied_scan">Bluetooth permission was denied. Cannot start scanning.</string>
