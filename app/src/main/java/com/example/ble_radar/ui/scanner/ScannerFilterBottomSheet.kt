@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,11 +29,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.ble_radar.R
 import com.example.ble_radar.data.model.BleSignalLevel
 import com.example.ble_radar.theme.BleRadarTheme
 import com.example.ble_radar.theme.RadarOnSurface
@@ -46,10 +47,6 @@ import com.example.ble_radar.theme.RadarPrimaryContainer
 import com.example.ble_radar.theme.RadarSurfaceContainer
 import com.example.ble_radar.theme.RadarSurfaceContainerLow
 
-/**
- * Stateful compose modal bottom sheet for search criteria and RSSI filtering.
- * Represents Stitch screen 179dd18e9c4843099423deaf6c0067d3.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScannerFilterBottomSheet(
@@ -68,7 +65,6 @@ fun ScannerFilterBottomSheet(
     containerColor = RadarSurfaceContainerLow,
     shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
     dragHandle = {
-      // Drag Handle Pill
       Box(
         modifier = Modifier
           .padding(top = 12.dp, bottom = 8.dp)
@@ -95,9 +91,6 @@ fun ScannerFilterBottomSheet(
   }
 }
 
-/**
- * Stateless compose content displaying filter buttons and RSSI distance levels.
- */
 @Composable
 fun ScannerFilterContent(
   filterState: ScannerFilterState,
@@ -113,14 +106,13 @@ fun ScannerFilterContent(
       .padding(bottom = 32.dp),
     verticalArrangement = Arrangement.spacedBy(10.dp),
   ) {
-    // Header Row with Title and Reset Action
     Row(
       modifier = Modifier.fillMaxWidth(),
       horizontalArrangement = Arrangement.SpaceBetween,
       verticalAlignment = Alignment.CenterVertically,
     ) {
       Text(
-        text = "Search Filter",
+        text = stringResource(R.string.search_filter_title),
         style = MaterialTheme.typography.titleMedium,
         fontWeight = FontWeight.Bold,
         color = RadarPrimary,
@@ -132,7 +124,7 @@ fun ScannerFilterContent(
       ) {
         Icon(
           imageVector = Icons.Default.RestartAlt,
-          contentDescription = "Reset filter",
+          contentDescription = stringResource(R.string.content_desc_reset_filter),
           tint = RadarOutline,
           modifier = Modifier.size(20.dp),
         )
@@ -141,21 +133,19 @@ fun ScannerFilterContent(
 
     Spacer(modifier = Modifier.height(4.dp))
 
-    // Filter Criteria Buttons Stack (from Stitch screen 179dd18e9c4843099423deaf6c0067d3)
     SearchFilterTarget.entries.forEach { target ->
       val isSelected = filterState.target == target
       FilterOptionButton(
-        title = target.displayName,
+        title = stringResource(target.displayNameRes),
         isSelected = isSelected,
         onClick = { onSelectTarget(target) },
       )
     }
 
-    // Sub-levels when RSSI is chosen
     if (filterState.target == SearchFilterTarget.RSSI) {
       Spacer(modifier = Modifier.height(6.dp))
       Text(
-        text = "Select Distance / Signal Strength:",
+        text = stringResource(R.string.select_distance_signal_strength),
         style = MaterialTheme.typography.labelSmall,
         color = RadarOnSurfaceVariant,
         fontFamily = FontFamily.Monospace,
@@ -183,9 +173,6 @@ fun ScannerFilterContent(
   }
 }
 
-/**
- * Filter option item button with active/inactive border and styling.
- */
 @Composable
 fun FilterOptionButton(
   title: String,
@@ -236,9 +223,6 @@ fun FilterOptionButton(
   }
 }
 
-/**
- * Detail card for specific RSSI distance level.
- */
 @Composable
 fun SignalLevelOptionCard(
   level: BleSignalLevel,
@@ -296,10 +280,6 @@ fun SignalLevelOptionCard(
     }
   }
 }
-
-// ==========================================
-// Previews
-// ==========================================
 
 @Preview(name = "Scanner Filter - Default All", showBackground = true)
 @Composable

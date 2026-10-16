@@ -1,6 +1,7 @@
 package com.example.ble_radar.ui.scanner
 
 import androidx.compose.ui.graphics.Color
+import com.example.ble_radar.R
 import com.example.ble_radar.data.model.BleSignalLevel
 import com.example.ble_radar.data.model.DiscoveredDevice
 import com.example.ble_radar.theme.RadarError
@@ -33,6 +34,17 @@ data class BleDeviceItem(
       }
 }
 
+val BleSignalLevel.barColor: Color
+  get() =
+    when (this) {
+      BleSignalLevel.VERY_STRONG -> com.example.ble_radar.theme.SignalVeryStrong
+      BleSignalLevel.STRONG -> com.example.ble_radar.theme.SignalStrong
+      BleSignalLevel.MODERATE -> com.example.ble_radar.theme.SignalModerate
+      BleSignalLevel.WEAK -> com.example.ble_radar.theme.SignalWeak
+      BleSignalLevel.VERY_WEAK -> com.example.ble_radar.theme.SignalVeryWeak
+      BleSignalLevel.LOST -> com.example.ble_radar.theme.SignalLost
+    }
+
 fun DiscoveredDevice.toBleDeviceItem(): BleDeviceItem = BleDeviceItem(
   id = macAddress,
   name = name,
@@ -48,11 +60,11 @@ enum class ScannerNavTab {
   HISTORY,
 }
 
-enum class SearchFilterTarget(val displayName: String) {
-  ALL("All"),
-  DEVICE_NAME("Device Name"),
-  MAC_ADDRESS("MAC Address"),
-  RSSI("Signal Strength (RSSI)"),
+enum class SearchFilterTarget(val displayNameRes: Int, val displayName: String) {
+  ALL(R.string.filter_target_all, "All"),
+  DEVICE_NAME(R.string.filter_target_device_name, "Device Name"),
+  MAC_ADDRESS(R.string.filter_target_mac_address, "MAC Address"),
+  RSSI(R.string.filter_target_rssi, "Signal Strength (RSSI)"),
 }
 
 data class ScannerFilterState(
@@ -74,7 +86,6 @@ data class ScannerUiState(
   val filteredDevices: List<BleDeviceItem>
     get() {
       return devices.filter { device ->
-        // 1. Text filter based on target
         val textMatches = if (searchQuery.isBlank()) {
           true
         } else {
@@ -99,7 +110,6 @@ data class ScannerUiState(
           }
         }
 
-        // 2. Specific RSSI / distance signal level filter if selected
         val signalMatches = if (filterState.target == SearchFilterTarget.RSSI && filterState.selectedSignalLevel != null) {
           device.signalLevel == filterState.selectedSignalLevel
         } else {

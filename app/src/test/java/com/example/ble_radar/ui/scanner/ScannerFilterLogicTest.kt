@@ -12,28 +12,28 @@ class ScannerFilterLogicTest {
       id = "AA:BB:CC:DD:EE:01",
       name = "Nordic nRF Beacon",
       macAddress = "AA:BB:CC:DD:EE:01",
-      rssi = -25, // VERY_STRONG (< 1 meter)
+      rssi = -25,
       estimatedDistance = "< 1 meter",
     ),
     BleDeviceItem(
       id = "11:22:33:44:55:66",
       name = "Apple Watch Ultra",
       macAddress = "11:22:33:44:55:66",
-      rssi = -42, // STRONG (1 – 3 meters)
+      rssi = -42,
       estimatedDistance = "1 – 3 meters",
     ),
     BleDeviceItem(
       id = "AA:11:22:33:44:99",
       name = "ESP32 Sensor Hub",
       macAddress = "AA:11:22:33:44:99",
-      rssi = -68, // MODERATE (3 – 10 meters)
+      rssi = -68,
       estimatedDistance = "3 – 10 meters",
     ),
     BleDeviceItem(
       id = "0000FE95-0000-1000-8000-00805F9B34FB",
       name = "Unknown Device",
       uuid = "0000FE95-0000-1000-8000-00805F9B34FB",
-      rssi = -88, // VERY_WEAK (> 20 meters)
+      rssi = -88,
       estimatedDistance = "> 20 meters",
       isUnknown = true,
     ),
@@ -88,14 +88,12 @@ class ScannerFilterLogicTest {
 
   @Test
   fun filterTargetDeviceName_matchesOnlyNameAndNotMacOrUuid() {
-    // Query "AA" appears in both names and MAC addresses
     val state = ScannerUiState(
       devices = testDevices,
       searchQuery = "AA",
       filterState = ScannerFilterState(target = SearchFilterTarget.DEVICE_NAME),
     )
 
-    // No device has "AA" in their name ("Nordic...", "Apple...", "ESP32...", "Unknown...")
     assertEquals(0, state.filteredDevices.size)
 
     val stateMatch = ScannerUiState(
@@ -118,7 +116,6 @@ class ScannerFilterLogicTest {
     assertEquals(1, state.filteredDevices.size)
     assertEquals("ESP32 Sensor Hub", state.filteredDevices[0].name)
 
-    // Searching device name "ESP32" under MAC filter should yield 0
     val stateMismatch = ScannerUiState(
       devices = testDevices,
       searchQuery = "ESP32",
@@ -129,7 +126,6 @@ class ScannerFilterLogicTest {
 
   @Test
   fun filterTargetRssi_matchesNumericRssiAndSignalLevelLabel() {
-    // 1. Matches numeric RSSI substring
     val stateNumeric = ScannerUiState(
       devices = testDevices,
       searchQuery = "-42",
@@ -138,7 +134,6 @@ class ScannerFilterLogicTest {
     assertEquals(1, stateNumeric.filteredDevices.size)
     assertEquals(-42, stateNumeric.filteredDevices[0].rssi)
 
-    // 2. Matches signal level label (e.g. "Very Strong")
     val stateLabel = ScannerUiState(
       devices = testDevices,
       searchQuery = "Very Strong",
@@ -147,7 +142,6 @@ class ScannerFilterLogicTest {
     assertEquals(1, stateLabel.filteredDevices.size)
     assertEquals("Nordic nRF Beacon", stateLabel.filteredDevices[0].name)
 
-    // 3. Matches estimated distance string (e.g. "3 – 10 meters")
     val stateDistance = ScannerUiState(
       devices = testDevices,
       searchQuery = "3 – 10",
@@ -174,7 +168,6 @@ class ScannerFilterLogicTest {
 
   @Test
   fun filterTargetRssi_combinedTextAndSignalLevelFilter() {
-    // Both signal level VERY_STRONG and search query matching name or RSSI
     val stateMatch = ScannerUiState(
       devices = testDevices,
       searchQuery = "Nordic",
@@ -183,7 +176,6 @@ class ScannerFilterLogicTest {
         selectedSignalLevel = BleSignalLevel.VERY_STRONG,
       ),
     )
-    // -25 dBm matches VERY_STRONG, but target is RSSI so query "Nordic" doesn't match RSSI fields
     assertEquals(0, stateMatch.filteredDevices.size)
 
     val stateMatchRssi = ScannerUiState(

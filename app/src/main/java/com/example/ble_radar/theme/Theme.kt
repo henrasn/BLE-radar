@@ -3,7 +3,6 @@ package com.example.ble_radar.theme
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 private val DarkColorScheme =
@@ -39,7 +38,7 @@ private val DarkColorScheme =
     onErrorContainer = RadarOnErrorContainer,
   )
 
-private val LightColorScheme = DarkColorScheme // Cyber radar is inherently dark-themed
+private val LightColorScheme = DarkColorScheme
 
 @Composable
 fun BleRadarTheme(

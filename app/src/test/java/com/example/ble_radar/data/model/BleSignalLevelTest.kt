@@ -9,33 +9,27 @@ class BleSignalLevelTest {
 
   @Test
   fun fromRssi_boundaryValues_mapToExpectedSignalLevels() {
-    // Very Strong: >= -30 dBm
     assertEquals(BleSignalLevel.VERY_STRONG, BleSignalLevel.fromRssi(0))
     assertEquals(BleSignalLevel.VERY_STRONG, BleSignalLevel.fromRssi(-10))
     assertEquals(BleSignalLevel.VERY_STRONG, BleSignalLevel.fromRssi(-25))
     assertEquals(BleSignalLevel.VERY_STRONG, BleSignalLevel.fromRssi(-30))
 
-    // Strong: -31 to -50 dBm
     assertEquals(BleSignalLevel.STRONG, BleSignalLevel.fromRssi(-31))
     assertEquals(BleSignalLevel.STRONG, BleSignalLevel.fromRssi(-40))
     assertEquals(BleSignalLevel.STRONG, BleSignalLevel.fromRssi(-50))
 
-    // Moderate: -51 to -70 dBm
     assertEquals(BleSignalLevel.MODERATE, BleSignalLevel.fromRssi(-51))
     assertEquals(BleSignalLevel.MODERATE, BleSignalLevel.fromRssi(-60))
     assertEquals(BleSignalLevel.MODERATE, BleSignalLevel.fromRssi(-70))
 
-    // Weak: -71 to -80 dBm
     assertEquals(BleSignalLevel.WEAK, BleSignalLevel.fromRssi(-71))
     assertEquals(BleSignalLevel.WEAK, BleSignalLevel.fromRssi(-75))
     assertEquals(BleSignalLevel.WEAK, BleSignalLevel.fromRssi(-80))
 
-    // Very Weak: -81 to -90 dBm
     assertEquals(BleSignalLevel.VERY_WEAK, BleSignalLevel.fromRssi(-81))
     assertEquals(BleSignalLevel.VERY_WEAK, BleSignalLevel.fromRssi(-85))
     assertEquals(BleSignalLevel.VERY_WEAK, BleSignalLevel.fromRssi(-90))
 
-    // Lost: < -90 dBm
     assertEquals(BleSignalLevel.LOST, BleSignalLevel.fromRssi(-91))
     assertEquals(BleSignalLevel.LOST, BleSignalLevel.fromRssi(-100))
     assertEquals(BleSignalLevel.LOST, BleSignalLevel.fromRssi(-120))

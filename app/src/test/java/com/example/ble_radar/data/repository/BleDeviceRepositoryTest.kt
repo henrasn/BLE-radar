@@ -112,6 +112,74 @@ class BleDeviceRepositoryTest {
     val cleared = repository.getSavedDevices().first()
     assertEquals(0, cleared.size)
   }
+
+  @Test
+  fun startTargetDiscovery_filtersAndEmitsOnlyTargetDevicePackets() = runTest {
+    val emittedTargetDevices = mutableListOf<DiscoveredDevice>()
+    val job = launch {
+      repository.startTargetDiscovery("AA:BB:CC:11:22:33").collect { device ->
+        emittedTargetDevices.add(device)
+      }
+    }
+    advanceUntilIdle()
+    assertTrue(repository.isScanning.first())
+
+    fakeScannerDataSource.emit(
+      DiscoveredDevice(
+        macAddress = "FF:EE:DD:00:11:22",
+        name = "Other Sensor",
+        rssi = -70,
+        estimatedDistance = "3 – 10 meters",
+      ),
+    )
+    advanceUntilIdle()
+    assertEquals(0, emittedTargetDevices.size)
+    assertEquals(1, fakeLocalDataSource.savedList.size)
+
+    fakeScannerDataSource.emit(
+      DiscoveredDevice(
+        macAddress = "AA:BB:CC:11:22:33",
+        name = "Target Beacon",
+        rssi = -28,
+        estimatedDistance = "< 1 meter",
+      ),
+    )
+    advanceUntilIdle()
+    assertEquals(1, emittedTargetDevices.size)
+    assertEquals("Target Beacon", emittedTargetDevices[0].name)
+    assertEquals(-28, emittedTargetDevices[0].rssi)
+
+    job.cancel()
+    advanceUntilIdle()
+    assertFalse(repository.isScanning.first())
+  }
+
+  @Test
+  fun observeDevice_emitsUpdatesFromLocalDataSource() = runTest {
+    val observed = mutableListOf<DiscoveredDevice?>()
+    val job = launch {
+      repository.observeDevice("TARGET_MAC").collect {
+        observed.add(it)
+      }
+    }
+    advanceUntilIdle()
+    assertEquals(1, observed.size)
+    assertEquals(null, observed[0])
+
+    repository.saveDevice(
+      DiscoveredDevice(
+        macAddress = "TARGET_MAC",
+        name = "Target",
+        rssi = -45,
+        estimatedDistance = "1 – 3 meters",
+      ),
+    )
+    advanceUntilIdle()
+    assertEquals(2, observed.size)
+    assertEquals("Target", observed[1]?.name)
+
+    job.cancel()
+  }
 }
 
 private class FakeBleScannerDataSource : BleScannerDataSource {
@@ -163,6 +231,10 @@ private class FakeBleLocalDataSource : BleLocalDataSource {
 
   override suspend fun getDevice(macAddress: String): DiscoveredDevice? {
     return savedList.find { it.macAddress == macAddress }
+  }
+
+  override fun observeDevice(macAddress: String): Flow<DiscoveredDevice?> {
+    return flow.map { list -> list.find { it.macAddress.equals(macAddress, ignoreCase = true) } }
   }
 
   override suspend fun clearAll() {

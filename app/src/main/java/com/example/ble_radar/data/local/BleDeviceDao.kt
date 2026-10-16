@@ -20,6 +20,9 @@ interface BleDeviceDao {
   @Query("SELECT * FROM ble_devices WHERE macAddress = :macAddress")
   suspend fun getDeviceByMac(macAddress: String): BleDeviceEntity?
 
+  @Query("SELECT * FROM ble_devices WHERE macAddress = :macAddress")
+  fun observeDeviceByMac(macAddress: String): Flow<BleDeviceEntity?>
+
   @Query("SELECT COUNT(*) FROM ble_devices")
   fun getDeviceCount(): Flow<Int>
 

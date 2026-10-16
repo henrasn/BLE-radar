@@ -59,6 +59,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -69,8 +70,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ble_radar.R
 import com.example.ble_radar.theme.BleRadarTheme
 import com.example.ble_radar.theme.RadarOnPrimaryContainer
 import com.example.ble_radar.theme.RadarOnSecondary
@@ -89,15 +91,10 @@ import com.example.ble_radar.theme.RadarSurfaceContainerLow
 import com.example.ble_radar.theme.RadarSurfaceContainerLowest
 import com.example.ble_radar.theme.RadarSurfaceVariant
 
-/**
- * Stateful compose screen that manages ViewModel lifecycle, permissions, and state collection.
- */
 @Composable
 fun ScannerScreen(
   modifier: Modifier = Modifier,
-  viewModel: ScannerViewModel = viewModel(
-    factory = ScannerViewModel.createFactory(LocalContext.current),
-  ),
+  viewModel: ScannerViewModel = hiltViewModel(),
   onDeviceClick: (BleDeviceItem) -> Unit = {},
   onNavigateToHistory: () -> Unit = {},
 ) {
@@ -166,9 +163,6 @@ fun ScannerScreen(
   }
 }
 
-/**
- * Stateless compose content displaying the BLE radar scanner UI.
- */
 @Composable
 fun ScannerContent(
   uiState: ScannerUiState,
@@ -207,7 +201,6 @@ fun ScannerContent(
       ),
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-      // Error Banner
       if (uiState.errorMessage != null) {
         item(key = "error_banner") {
           Surface(
@@ -234,7 +227,7 @@ fun ScannerContent(
               ) {
                 Icon(
                   imageVector = Icons.Default.Close,
-                  contentDescription = "Dismiss error",
+                  contentDescription = stringResource(R.string.content_desc_dismiss_error),
                   tint = MaterialTheme.colorScheme.onErrorContainer,
                   modifier = Modifier.size(16.dp),
                 )
@@ -244,7 +237,6 @@ fun ScannerContent(
         }
       }
 
-      // Diagnostic HUD
       item(key = "diagnostic_hud") {
         DiagnosticHudCard(
           isScanning = uiState.isScanning,
@@ -253,7 +245,6 @@ fun ScannerContent(
         )
       }
 
-      // Search & Tactical Filter Section
       item(key = "search_section") {
         SearchBarSection(
           searchQuery = uiState.searchQuery,
@@ -265,14 +256,12 @@ fun ScannerContent(
         )
       }
 
-      // Telemetry Header
       item(key = "telemetry_header") {
         TelemetryHeader(
           foundCount = uiState.filteredDevices.size,
         )
       }
 
-      // Real-Time Detected Devices Stack
       if (uiState.filteredDevices.isEmpty()) {
         item(key = "empty_state") {
           EmptyDevicesView(
@@ -294,9 +283,6 @@ fun ScannerContent(
   }
 }
 
-/**
- * Top App Bar with title and pulsing live indicator.
- */
 @Composable
 fun ScannerTopBar(
   modifier: Modifier = Modifier,
@@ -320,23 +306,19 @@ fun ScannerTopBar(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
       ) {
         Text(
-          text = "BLE Pulse Radar",
+          text = stringResource(R.string.title_ble_pulse_radar),
           style = MaterialTheme.typography.titleMedium,
           fontWeight = FontWeight.Bold,
           color = RadarPrimary,
           letterSpacing = (-0.5).sp,
         )
 
-        // Pulsing radar live indicator
         LivePulseIndicator()
       }
     }
   }
 }
 
-/**
- * Pulsing live beacon dot indicator.
- */
 @Composable
 fun LivePulseIndicator(
   modifier: Modifier = Modifier,
@@ -380,9 +362,6 @@ fun LivePulseIndicator(
   }
 }
 
-/**
- * Diagnostic status HUD card with scan toggle button labeled START / STOP.
- */
 @Composable
 fun DiagnosticHudCard(
   isScanning: Boolean,
@@ -390,6 +369,13 @@ fun DiagnosticHudCard(
   onToggleScan: () -> Unit,
   modifier: Modifier = Modifier,
 ) {
+  val scanningLabel = stringResource(R.string.status_scanning)
+  val devicesLabel = stringResource(R.string.status_devices_count, totalFoundCount)
+  val foundSuffix = stringResource(R.string.status_found_suffix)
+  val statusPrefix = stringResource(R.string.status_prefix)
+  val pausedSaved = stringResource(R.string.status_paused_saved, totalFoundCount)
+  val readyLabel = stringResource(R.string.status_ready)
+
   Surface(
     modifier = modifier.fillMaxWidth(),
     shape = RoundedCornerShape(12.dp),
@@ -412,7 +398,7 @@ fun DiagnosticHudCard(
           horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
           Text(
-            text = if (isScanning) "Scanner Active" else "Scanner Standby",
+            text = if (isScanning) stringResource(R.string.status_scanner_active) else stringResource(R.string.status_scanner_standby),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold,
             color = RadarOnSurface,
@@ -431,25 +417,25 @@ fun DiagnosticHudCard(
         val statusText = if (isScanning) {
           buildAnnotatedString {
             withStyle(SpanStyle(color = RadarOnSurfaceVariant)) {
-              append("SCANNING: ")
+              append(scanningLabel)
             }
             withStyle(SpanStyle(color = RadarPrimary, fontWeight = FontWeight.Bold)) {
-              append("$totalFoundCount DEVICES")
+              append(devicesLabel)
             }
             withStyle(SpanStyle(color = RadarOnSurfaceVariant)) {
-              append(" FOUND")
+              append(foundSuffix)
             }
           }
         } else {
           buildAnnotatedString {
             withStyle(SpanStyle(color = RadarOnSurfaceVariant)) {
-              append("STATUS: ")
+              append(statusPrefix)
             }
             withStyle(SpanStyle(color = RadarOutline, fontWeight = FontWeight.Bold)) {
               if (totalFoundCount > 0) {
-                append("PAUSED ($totalFoundCount SAVED)")
+                append(pausedSaved)
               } else {
-                append("READY (PRESS START)")
+                append(readyLabel)
               }
             }
           }
@@ -482,7 +468,7 @@ fun DiagnosticHudCard(
         )
         Spacer(modifier = Modifier.width(6.dp))
         Text(
-          text = if (isScanning) "STOP" else "START",
+          text = if (isScanning) stringResource(R.string.btn_stop) else stringResource(R.string.btn_start),
           style = MaterialTheme.typography.labelMedium,
           fontWeight = FontWeight.Bold,
           fontFamily = FontFamily.Monospace,
@@ -492,9 +478,6 @@ fun DiagnosticHudCard(
   }
 }
 
-/**
- * Search input field and filter button.
- */
 @Composable
 fun SearchBarSection(
   searchQuery: String,
@@ -507,10 +490,10 @@ fun SearchBarSection(
 ) {
   val isFilterActive = filterState.target != SearchFilterTarget.ALL || filterState.selectedSignalLevel != null
   val placeholder = when (filterState.target) {
-    SearchFilterTarget.ALL -> "Search Name, MAC, or UUID..."
-    SearchFilterTarget.DEVICE_NAME -> "Search Device Name..."
-    SearchFilterTarget.MAC_ADDRESS -> "Search MAC Address..."
-    SearchFilterTarget.RSSI -> "Search Signal Strength (RSSI)..."
+    SearchFilterTarget.ALL -> stringResource(R.string.search_hint_default)
+    SearchFilterTarget.DEVICE_NAME -> stringResource(R.string.search_hint_device_name)
+    SearchFilterTarget.MAC_ADDRESS -> stringResource(R.string.search_hint_mac_address)
+    SearchFilterTarget.RSSI -> stringResource(R.string.search_hint_rssi)
   }
 
   Column(
@@ -522,7 +505,6 @@ fun SearchBarSection(
       verticalAlignment = Alignment.CenterVertically,
       horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-      // Search Box
       Surface(
         modifier = Modifier
           .weight(1f)
@@ -538,7 +520,7 @@ fun SearchBarSection(
         ) {
           Icon(
             imageVector = Icons.Default.Search,
-            contentDescription = "Search",
+            contentDescription = null,
             tint = RadarOutline,
             modifier = Modifier.size(20.dp),
           )
@@ -578,7 +560,7 @@ fun SearchBarSection(
             ) {
               Icon(
                 imageVector = Icons.Default.Close,
-                contentDescription = "Clear search",
+                contentDescription = stringResource(R.string.content_desc_clear_search),
                 tint = RadarOnSurfaceVariant,
                 modifier = Modifier.size(16.dp),
               )
@@ -587,7 +569,6 @@ fun SearchBarSection(
         }
       }
 
-      // Filter Button
       Surface(
         modifier = Modifier
           .size(44.dp)
@@ -609,7 +590,7 @@ fun SearchBarSection(
         ) {
           Icon(
             imageVector = Icons.Default.Tune,
-            contentDescription = "Search filter",
+            contentDescription = stringResource(R.string.content_desc_search_filter),
             tint = if (isFilterActive) RadarPrimaryContainer else RadarPrimaryFixedDim,
             modifier = Modifier.size(18.dp),
           )
@@ -617,8 +598,9 @@ fun SearchBarSection(
       }
     }
 
-    // Active Filter Chip Indicator
     if (isFilterActive) {
+      val targetName = stringResource(filterState.target.displayNameRes)
+      val filterBadge = stringResource(R.string.filter_badge, targetName)
       Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -635,7 +617,7 @@ fun SearchBarSection(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
           ) {
             val filterDescription = buildString {
-              append("Filter: ${filterState.target.displayName}")
+              append(filterBadge)
               filterState.selectedSignalLevel?.let {
                 append(" • ${it.distanceRange}")
               }
@@ -648,7 +630,7 @@ fun SearchBarSection(
             )
             Icon(
               imageVector = Icons.Default.Close,
-              contentDescription = "Reset filter",
+              contentDescription = stringResource(R.string.content_desc_reset_filter),
               tint = RadarPrimaryContainer,
               modifier = Modifier
                 .size(14.dp)
@@ -661,9 +643,6 @@ fun SearchBarSection(
   }
 }
 
-/**
- * Header row above the device list.
- */
 @Composable
 fun TelemetryHeader(
   foundCount: Int,
@@ -687,7 +666,7 @@ fun TelemetryHeader(
         modifier = Modifier.size(16.dp),
       )
       Text(
-        text = "DETECTED DEVICES LIST",
+        text = stringResource(R.string.header_detected_devices),
         style = MaterialTheme.typography.labelSmall,
         fontWeight = FontWeight.SemiBold,
         color = RadarOnSurfaceVariant,
@@ -696,7 +675,7 @@ fun TelemetryHeader(
     }
 
     Text(
-      text = "$foundCount Found",
+      text = stringResource(R.string.status_found_count, foundCount),
       style = MaterialTheme.typography.labelSmall,
       fontFamily = FontFamily.Monospace,
       color = RadarOutline,
@@ -704,9 +683,6 @@ fun TelemetryHeader(
   }
 }
 
-/**
- * Individual device telemetry card.
- */
 @Composable
 fun BleDeviceCard(
   device: BleDeviceItem,
@@ -748,7 +724,7 @@ fun BleDeviceCard(
           horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
           Text(
-            text = if (device.macAddress != null) "MAC:" else "UUID:",
+            text = if (device.macAddress != null) stringResource(R.string.label_mac_prefix) else stringResource(R.string.label_uuid_prefix),
             style = MaterialTheme.typography.labelMedium,
             fontFamily = FontFamily.Monospace,
             color = RadarOnSurfaceVariant,
@@ -772,7 +748,7 @@ fun BleDeviceCard(
           horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
           Text(
-            text = "${device.rssi} dBm",
+            text = stringResource(R.string.unit_dbm, device.rssi),
             style = MaterialTheme.typography.labelMedium,
             fontFamily = FontFamily.Monospace,
             fontWeight = FontWeight.Bold,
@@ -786,7 +762,7 @@ fun BleDeviceCard(
           )
 
           Text(
-            text = "Est. Distance: ${device.estimatedDistance}",
+            text = stringResource(R.string.label_est_distance, device.estimatedDistance),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             color = RadarOnSurfaceVariant,
@@ -797,9 +773,6 @@ fun BleDeviceCard(
   }
 }
 
-/**
- * View displayed when no devices match the search or scanner buffer.
- */
 @Composable
 fun EmptyDevicesView(
   isSearching: Boolean,
@@ -822,7 +795,7 @@ fun EmptyDevicesView(
         modifier = Modifier.size(48.dp),
       )
       Text(
-        text = if (isSearching) "No matching devices found" else "No devices detected yet",
+        text = if (isSearching) stringResource(R.string.empty_no_matching_devices) else stringResource(R.string.empty_no_devices),
         style = MaterialTheme.typography.bodyMedium,
         color = RadarOnSurfaceVariant,
       )
@@ -830,9 +803,6 @@ fun EmptyDevicesView(
   }
 }
 
-/**
- * Bottom navigation bar with Scanner and History tabs.
- */
 @Composable
 fun ScannerBottomNavBar(
   selectedTab: ScannerNavTab,
@@ -853,7 +823,6 @@ fun ScannerBottomNavBar(
       horizontalArrangement = Arrangement.SpaceAround,
       verticalAlignment = Alignment.CenterVertically,
     ) {
-      // Scanner Tab
       val isScannerActive = selectedTab == ScannerNavTab.SCANNER
       Box(
         modifier = Modifier
@@ -872,13 +841,13 @@ fun ScannerBottomNavBar(
         ) {
           Icon(
             imageVector = Icons.Default.Radar,
-            contentDescription = "Scanner",
+            contentDescription = stringResource(R.string.nav_scanner),
             tint = if (isScannerActive) RadarPrimaryContainer else RadarOnSurfaceVariant,
             modifier = Modifier.size(22.dp),
           )
           Spacer(modifier = Modifier.height(2.dp))
           Text(
-            text = "SCANNER",
+            text = stringResource(R.string.nav_scanner).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             letterSpacing = 0.8.sp,
@@ -889,7 +858,6 @@ fun ScannerBottomNavBar(
 
       Spacer(modifier = Modifier.width(8.dp))
 
-      // History Tab
       val isHistoryActive = selectedTab == ScannerNavTab.HISTORY
       Box(
         modifier = Modifier
@@ -908,13 +876,13 @@ fun ScannerBottomNavBar(
         ) {
           Icon(
             imageVector = Icons.Default.History,
-            contentDescription = "History",
+            contentDescription = stringResource(R.string.nav_history),
             tint = if (isHistoryActive) RadarPrimaryContainer else RadarOnSurfaceVariant,
             modifier = Modifier.size(22.dp),
           )
           Spacer(modifier = Modifier.height(2.dp))
           Text(
-            text = "HISTORY",
+            text = stringResource(R.string.nav_history).uppercase(),
             style = MaterialTheme.typography.labelSmall,
             fontFamily = FontFamily.Monospace,
             letterSpacing = 0.8.sp,
@@ -925,10 +893,6 @@ fun ScannerBottomNavBar(
     }
   }
 }
-
-// ==========================================
-// Previews
-// ==========================================
 
 @Preview(name = "Scanner Content - Default Scanning State", showBackground = true)
 @Composable

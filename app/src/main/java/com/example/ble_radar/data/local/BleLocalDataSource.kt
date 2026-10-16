@@ -1,6 +1,7 @@
 package com.example.ble_radar.data.local
 
 import com.example.ble_radar.data.model.DiscoveredDevice
+import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -10,10 +11,11 @@ interface BleLocalDataSource {
   suspend fun saveDevice(device: DiscoveredDevice)
   suspend fun saveDevices(devices: List<DiscoveredDevice>)
   suspend fun getDevice(macAddress: String): DiscoveredDevice?
+  fun observeDevice(macAddress: String): Flow<DiscoveredDevice?>
   suspend fun clearAll()
 }
 
-class BleLocalDataSourceImpl(
+class BleLocalDataSourceImpl @Inject constructor(
   private val dao: BleDeviceDao,
 ) : BleLocalDataSource {
 
@@ -35,6 +37,10 @@ class BleLocalDataSourceImpl(
 
   override suspend fun getDevice(macAddress: String): DiscoveredDevice? {
     return dao.getDeviceByMac(macAddress)?.toDiscoveredDevice()
+  }
+
+  override fun observeDevice(macAddress: String): Flow<DiscoveredDevice?> {
+    return dao.observeDeviceByMac(macAddress).map { it?.toDiscoveredDevice() }
   }
 
   override suspend fun clearAll() {

@@ -5,42 +5,36 @@ enum class BleSignalLevel(
   val distanceRange: String,
   val fullDescription: String,
 ) {
-  // -10 to -30 dBm Very Strong (Very Close) < 1 meter
   VERY_STRONG(
     label = "Very Strong (Very Close)",
     distanceRange = "< 1 meter",
     fullDescription = "Very Strong (Very Close) < 1 meter",
   ),
 
-  // -30 to -50 dBm Strong (Close) 1 – 3 meters
   STRONG(
     label = "Strong (Close)",
     distanceRange = "1 – 3 meters",
     fullDescription = "Strong (Close) 1 – 3 meters",
   ),
 
-  // -50 to -70 dBm Moderate / Good 3 – 10 meters
   MODERATE(
     label = "Moderate / Good",
     distanceRange = "3 – 10 meters",
     fullDescription = "Moderate / Good 3 – 10 meters",
   ),
 
-  // -70 to -80 dBm Weak 10 – 20 meters
   WEAK(
     label = "Weak",
     distanceRange = "10 – 20 meters",
     fullDescription = "Weak 10 – 20 meters",
   ),
 
-  // -80 to -90 dBm Very Weak / Intermittent > 20 meters (Out of range threshold)
   VERY_WEAK(
     label = "Very Weak / Intermittent",
     distanceRange = "> 20 meters",
     fullDescription = "Very Weak / Intermittent > 20 meters (Out of range threshold)",
   ),
 
-  // < -90 dBm Signal Lost (Disconnected / Out of range)
   LOST(
     label = "Signal Lost",
     distanceRange = "Disconnected",
@@ -75,15 +69,6 @@ data class DiscoveredDevice(
     get() = BleSignalLevel.fromRssi(rssi)
 
   companion object {
-    /**
-     * Determines distance classification based on RSSI ranges:
-     * -10 to -30 dBm: Very Strong (Very Close) < 1 meter
-     * -30 to -50 dBm: Strong (Close) 1 – 3 meters
-     * -50 to -70 dBm: Moderate / Good 3 – 10 meters
-     * -70 to -80 dBm: Weak 10 – 20 meters
-     * -80 to -90 dBm: Very Weak / Intermittent > 20 meters
-     * < -90 dBm: Signal Lost (Disconnected / Out of range)
-     */
     fun calculateDistance(rssi: Int): String {
       return BleSignalLevel.fromRssi(rssi).distanceRange
     }
