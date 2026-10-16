@@ -14,37 +14,27 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material.icons.filled.Sensors
 import androidx.compose.material.icons.filled.SignalCellularAlt
-import androidx.compose.material.icons.filled.StopCircle
 import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material.icons.filled.WifiTethering
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +42,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -70,12 +61,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ble_radar.R
 import com.example.ble_radar.data.model.BleSignalLevel
 import com.example.ble_radar.theme.BleRadarTheme
-import com.example.ble_radar.theme.RadarOnPrimaryContainer
-import com.example.ble_radar.theme.RadarOnSecondary
 import com.example.ble_radar.theme.RadarOnSurface
 import com.example.ble_radar.theme.RadarOnSurfaceVariant
 import com.example.ble_radar.theme.RadarOutline
@@ -87,7 +79,6 @@ import com.example.ble_radar.theme.RadarSecondaryContainer
 import com.example.ble_radar.theme.RadarSurface
 import com.example.ble_radar.theme.RadarSurfaceContainerHigh
 import com.example.ble_radar.theme.RadarSurfaceContainerHighest
-import com.example.ble_radar.theme.RadarSurfaceContainerLow
 import com.example.ble_radar.theme.RadarSurfaceContainerLowest
 import com.example.ble_radar.theme.RadarSurfaceVariant
 import com.example.ble_radar.theme.SignalLost
@@ -109,10 +100,9 @@ fun RadarTargetScreen(
     },
   ),
   onBackClick: () -> Unit = {},
-  onNavigateToScanner: () -> Unit = {},
-  onNavigateToHistory: () -> Unit = {},
 ) {
   val context = LocalContext.current
+  val lifecycleOwner = LocalLifecycleOwner.current
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
   val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -135,27 +125,37 @@ fun RadarTargetScreen(
     viewModel.onPermissionsResult(allGranted)
   }
 
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      when (event) {
+        Lifecycle.Event.ON_START -> {
+          val hasPermissions = permissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+          }
+          if (hasPermissions) {
+            viewModel.startTracking()
+          } else {
+            permissionLauncher.launch(permissions)
+          }
+        }
+        Lifecycle.Event.ON_STOP -> {
+          viewModel.stopTracking()
+        }
+        else -> Unit
+      }
+    }
+    lifecycleOwner.lifecycle.addObserver(observer)
+    onDispose {
+      lifecycleOwner.lifecycle.removeObserver(observer)
+      viewModel.stopTracking()
+    }
+  }
+
   RadarTargetContent(
     uiState = uiState,
     modifier = modifier,
     onBackClick = onBackClick,
-    onToggleTracking = {
-      if (uiState.isScanning) {
-        viewModel.stopTracking()
-      } else {
-        val hasPermissions = permissions.all {
-          ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
-        }
-        if (hasPermissions) {
-          viewModel.startTracking()
-        } else {
-          permissionLauncher.launch(permissions)
-        }
-      }
-    },
     onDismissError = viewModel::clearErrorMessage,
-    onNavigateToScanner = onNavigateToScanner,
-    onNavigateToHistory = onNavigateToHistory,
   )
 }
 
@@ -164,10 +164,7 @@ fun RadarTargetContent(
   uiState: RadarTargetUiState,
   modifier: Modifier = Modifier,
   onBackClick: () -> Unit = {},
-  onToggleTracking: () -> Unit = {},
   onDismissError: () -> Unit = {},
-  onNavigateToScanner: () -> Unit = {},
-  onNavigateToHistory: () -> Unit = {},
 ) {
   Scaffold(
     modifier = modifier.fillMaxSize(),
@@ -176,12 +173,6 @@ fun RadarTargetContent(
       RadarTargetTopBar(
         isLive = uiState.isScanning,
         onBackClick = onBackClick,
-      )
-    },
-    bottomBar = {
-      RadarTargetBottomNavBar(
-        onScannerClick = onNavigateToScanner,
-        onHistoryClick = onNavigateToHistory,
       )
     },
   ) { innerPadding ->
@@ -248,13 +239,6 @@ fun RadarTargetContent(
           estimatedDistance = uiState.estimatedDistance,
           signalLevel = uiState.signalLevel,
           isLive = uiState.isScanning,
-        )
-      }
-
-      item(key = "tracking_controls") {
-        TrackingControlsCard(
-          isScanning = uiState.isScanning,
-          onToggleTracking = onToggleTracking,
         )
       }
     }
@@ -721,156 +705,6 @@ fun SignalStrengthBar(
             shape = RoundedCornerShape(2.dp),
           ),
       )
-    }
-  }
-}
-
-@Composable
-fun TrackingControlsCard(
-  isScanning: Boolean,
-  onToggleTracking: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    shape = RoundedCornerShape(16.dp),
-    color = RadarSurfaceContainerLow,
-    shadowElevation = 2.dp,
-  ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(14.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Column(
-        modifier = Modifier.weight(1f),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-      ) {
-        Text(
-          text = if (isScanning) stringResource(R.string.target_tracking_active) else stringResource(R.string.target_tracking_paused),
-          style = MaterialTheme.typography.titleSmall,
-          fontWeight = FontWeight.SemiBold,
-          color = RadarOnSurface,
-        )
-        Text(
-          text = if (isScanning) stringResource(R.string.target_tracking_active_desc) else stringResource(R.string.target_tracking_paused_desc),
-          style = MaterialTheme.typography.labelSmall,
-          color = RadarOnSurfaceVariant,
-        )
-      }
-
-      Spacer(modifier = Modifier.width(12.dp))
-
-      Button(
-        onClick = onToggleTracking,
-        shape = RoundedCornerShape(12.dp),
-        colors = ButtonDefaults.buttonColors(
-          containerColor = if (isScanning) RadarPrimaryContainer else RadarSecondary,
-          contentColor = if (isScanning) RadarOnPrimaryContainer else RadarOnSecondary,
-        ),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-        modifier = Modifier.height(40.dp),
-      ) {
-        Icon(
-          imageVector = if (isScanning) Icons.Default.StopCircle else Icons.Default.PlayArrow,
-          contentDescription = null,
-          modifier = Modifier.size(18.dp),
-        )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-          text = if (isScanning) stringResource(R.string.btn_stop) else stringResource(R.string.btn_start),
-          style = MaterialTheme.typography.labelMedium,
-          fontWeight = FontWeight.Bold,
-          fontFamily = FontFamily.Monospace,
-        )
-      }
-    }
-  }
-}
-
-@Composable
-fun RadarTargetBottomNavBar(
-  onScannerClick: () -> Unit,
-  onHistoryClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    color = RadarSurfaceContainerLowest.copy(alpha = 0.88f),
-    shadowElevation = 8.dp,
-  ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .navigationBarsPadding()
-        .height(64.dp)
-        .padding(horizontal = 12.dp, vertical = 6.dp),
-      horizontalArrangement = Arrangement.SpaceAround,
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      Box(
-        modifier = Modifier
-          .weight(1f)
-          .height(48.dp)
-          .clip(RoundedCornerShape(12.dp))
-          .background(RadarSurfaceVariant.copy(alpha = 0.45f))
-          .clickable(onClick = onScannerClick),
-        contentAlignment = Alignment.Center,
-      ) {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.Center,
-        ) {
-          Icon(
-            imageVector = Icons.Default.Radar,
-            contentDescription = stringResource(R.string.nav_scanner),
-            tint = RadarPrimaryContainer,
-            modifier = Modifier.size(22.dp),
-          )
-          Spacer(modifier = Modifier.height(2.dp))
-          Text(
-            text = stringResource(R.string.nav_scanner).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 0.8.sp,
-            color = RadarPrimaryContainer,
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.width(8.dp))
-
-      Box(
-        modifier = Modifier
-          .weight(1f)
-          .height(48.dp)
-          .clip(RoundedCornerShape(12.dp))
-          .background(RadarSurfaceContainerLowest)
-          .clickable(onClick = onHistoryClick),
-        contentAlignment = Alignment.Center,
-      ) {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.Center,
-        ) {
-          Icon(
-            imageVector = Icons.Default.History,
-            contentDescription = stringResource(R.string.nav_history),
-            tint = RadarOnSurfaceVariant,
-            modifier = Modifier.size(22.dp),
-          )
-          Spacer(modifier = Modifier.height(2.dp))
-          Text(
-            text = stringResource(R.string.nav_history).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 0.8.sp,
-            color = RadarOnSurfaceVariant,
-          )
-        }
-      }
     }
   }
 }
