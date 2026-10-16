@@ -47,6 +47,10 @@ class AndroidBleScannerDataSource @Inject constructor(
         ContextCompat.checkSelfPermission(
           context,
           Manifest.permission.BLUETOOTH_CONNECT,
+        ) == PackageManager.PERMISSION_GRANTED &&
+        ContextCompat.checkSelfPermission(
+          context,
+          Manifest.permission.ACCESS_FINE_LOCATION,
         ) == PackageManager.PERMISSION_GRANTED
     } else {
       ContextCompat.checkSelfPermission(
@@ -89,7 +93,12 @@ class AndroidBleScannerDataSource @Inject constructor(
           val device = scanResult.device ?: return
           val address = device.address ?: return
           val rawName = scanResult.scanRecord?.deviceName ?: device.name
-          val displayName = if (rawName.isNullOrBlank()) "Unknown Device" else rawName.trim()
+          val appleData = scanResult.scanRecord?.getManufacturerSpecificData(0x004C)
+          val displayName = when {
+            !rawName.isNullOrBlank() -> rawName.trim()
+            appleData != null -> "Apple Device"
+            else -> "Unknown Device"
+          }
           val rssi = scanResult.rssi
           val estimatedDistance = DiscoveredDevice.calculateDistance(rssi)
 
@@ -109,7 +118,12 @@ class AndroidBleScannerDataSource @Inject constructor(
           val device = scanResult.device ?: return@forEach
           val address = device.address ?: return@forEach
           val rawName = scanResult.scanRecord?.deviceName ?: device.name
-          val displayName = if (rawName.isNullOrBlank()) "Unknown Device" else rawName.trim()
+          val appleData = scanResult.scanRecord?.getManufacturerSpecificData(0x004C)
+          val displayName = when {
+            !rawName.isNullOrBlank() -> rawName.trim()
+            appleData != null -> "Apple Device"
+            else -> "Unknown Device"
+          }
           val rssi = scanResult.rssi
           val estimatedDistance = DiscoveredDevice.calculateDistance(rssi)
 
@@ -134,6 +148,9 @@ class AndroidBleScannerDataSource @Inject constructor(
     val settings = ScanSettings.Builder()
       .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
       .setReportDelay(0)
+      .setCallbackType(ScanSettings.CALLBACK_TYPE_ALL_MATCHES)
+      .setMatchMode(ScanSettings.MATCH_MODE_AGGRESSIVE)
+      .setNumOfMatches(ScanSettings.MATCH_NUM_MAX_ADVERTISEMENT)
       .build()
 
     try {

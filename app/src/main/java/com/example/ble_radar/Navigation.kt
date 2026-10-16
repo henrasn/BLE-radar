@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.ui.NavDisplay
+import com.example.ble_radar.ui.history.HistoryScreen
 import com.example.ble_radar.ui.scanner.ScannerScreen
 import com.example.ble_radar.ui.target.RadarTargetScreen
 
@@ -21,6 +22,18 @@ fun MainNavigation() {
             onDeviceClick = { device ->
               val mac = device.macAddress ?: device.id
               backStack.add(RadarTarget(mac))
+            },
+            onNavigateToHistory = {
+              backStack.add(History)
+            },
+          )
+        }
+        entry<History> {
+          HistoryScreen(
+            onNavigateToScanner = {
+              if (backStack.lastOrNull() is History) {
+                backStack.removeLastOrNull()
+              }
             },
           )
         }

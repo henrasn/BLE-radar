@@ -51,6 +51,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,9 +72,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.ble_radar.R
 import com.example.ble_radar.theme.BleRadarTheme
+import com.example.ble_radar.ui.components.BleDeviceCard
+import com.example.ble_radar.ui.components.BleRadarBottomNavBar
 import com.example.ble_radar.theme.RadarOnPrimaryContainer
 import com.example.ble_radar.theme.RadarOnSecondary
 import com.example.ble_radar.theme.RadarOnSurface
@@ -99,6 +105,7 @@ fun ScannerScreen(
   onNavigateToHistory: () -> Unit = {},
 ) {
   val context = LocalContext.current
+  val lifecycleOwner = LocalLifecycleOwner.current
   val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
   val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -119,6 +126,19 @@ fun ScannerScreen(
   ) { results ->
     val allGranted = results.values.all { it }
     viewModel.onPermissionsResult(allGranted)
+  }
+
+  DisposableEffect(lifecycleOwner) {
+    val observer = LifecycleEventObserver { _, event ->
+      if (event == Lifecycle.Event.ON_STOP) {
+        viewModel.stopScan()
+      }
+    }
+    lifecycleOwner.lifecycle.addObserver(observer)
+    onDispose {
+      lifecycleOwner.lifecycle.removeObserver(observer)
+      viewModel.stopScan()
+    }
   }
 
   ScannerContent(
@@ -147,6 +167,7 @@ fun ScannerScreen(
     onNavTabClick = { tab ->
       viewModel.selectTab(tab)
       if (tab == ScannerNavTab.HISTORY) {
+        viewModel.stopScan()
         onNavigateToHistory()
       }
     },
@@ -683,95 +704,6 @@ fun TelemetryHeader(
   }
 }
 
-@Composable
-fun BleDeviceCard(
-  device: BleDeviceItem,
-  onClick: () -> Unit,
-  modifier: Modifier = Modifier,
-) {
-  Surface(
-    modifier = modifier
-      .fillMaxWidth()
-      .clip(RoundedCornerShape(12.dp))
-      .clickable(onClick = onClick),
-    shape = RoundedCornerShape(12.dp),
-    color = RadarSurfaceContainer,
-    shadowElevation = 1.dp,
-  ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .padding(14.dp),
-      verticalAlignment = Alignment.CenterVertically,
-      horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-      Column(
-        modifier = Modifier.weight(1f),
-      ) {
-        Text(
-          text = device.name,
-          style = MaterialTheme.typography.titleMedium.copy(fontSize = 17.sp),
-          fontWeight = FontWeight.Bold,
-          color = if (device.isUnknown) RadarOutline else RadarPrimary,
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-        )
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-          Text(
-            text = if (device.macAddress != null) stringResource(R.string.label_mac_prefix) else stringResource(R.string.label_uuid_prefix),
-            style = MaterialTheme.typography.labelMedium,
-            fontFamily = FontFamily.Monospace,
-            color = RadarOnSurfaceVariant,
-          )
-          Text(
-            text = device.macAddress ?: device.uuid.orEmpty(),
-            style = MaterialTheme.typography.labelMedium.copy(
-              fontSize = if (device.uuid != null) 11.sp else 12.sp,
-            ),
-            fontFamily = FontFamily.Monospace,
-            color = RadarOnSurface,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-          )
-        }
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        Row(
-          verticalAlignment = Alignment.CenterVertically,
-          horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-          Text(
-            text = stringResource(R.string.unit_dbm, device.rssi),
-            style = MaterialTheme.typography.labelMedium,
-            fontFamily = FontFamily.Monospace,
-            fontWeight = FontWeight.Bold,
-            color = device.rssiColor,
-          )
-
-          Text(
-            text = "•",
-            style = MaterialTheme.typography.labelSmall,
-            color = RadarOutlineVariant,
-          )
-
-          Text(
-            text = stringResource(R.string.label_est_distance, device.estimatedDistance),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            color = RadarOnSurfaceVariant,
-          )
-        }
-      }
-    }
-  }
-}
 
 @Composable
 fun EmptyDevicesView(
@@ -809,89 +741,11 @@ fun ScannerBottomNavBar(
   onTabSelected: (ScannerNavTab) -> Unit,
   modifier: Modifier = Modifier,
 ) {
-  Surface(
-    modifier = modifier.fillMaxWidth(),
-    color = RadarSurfaceContainerLowest.copy(alpha = 0.88f),
-    shadowElevation = 8.dp,
-  ) {
-    Row(
-      modifier = Modifier
-        .fillMaxWidth()
-        .navigationBarsPadding()
-        .height(64.dp)
-        .padding(horizontal = 12.dp, vertical = 6.dp),
-      horizontalArrangement = Arrangement.SpaceAround,
-      verticalAlignment = Alignment.CenterVertically,
-    ) {
-      val isScannerActive = selectedTab == ScannerNavTab.SCANNER
-      Box(
-        modifier = Modifier
-          .weight(1f)
-          .height(48.dp)
-          .clip(RoundedCornerShape(12.dp))
-          .background(
-            if (isScannerActive) RadarSurfaceVariant.copy(alpha = 0.45f) else RadarSurfaceContainerLowest,
-          )
-          .clickable { onTabSelected(ScannerNavTab.SCANNER) },
-        contentAlignment = Alignment.Center,
-      ) {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.Center,
-        ) {
-          Icon(
-            imageVector = Icons.Default.Radar,
-            contentDescription = stringResource(R.string.nav_scanner),
-            tint = if (isScannerActive) RadarPrimaryContainer else RadarOnSurfaceVariant,
-            modifier = Modifier.size(22.dp),
-          )
-          Spacer(modifier = Modifier.height(2.dp))
-          Text(
-            text = stringResource(R.string.nav_scanner).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 0.8.sp,
-            color = if (isScannerActive) RadarPrimaryContainer else RadarOnSurfaceVariant,
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.width(8.dp))
-
-      val isHistoryActive = selectedTab == ScannerNavTab.HISTORY
-      Box(
-        modifier = Modifier
-          .weight(1f)
-          .height(48.dp)
-          .clip(RoundedCornerShape(12.dp))
-          .background(
-            if (isHistoryActive) RadarSurfaceVariant.copy(alpha = 0.45f) else RadarSurfaceContainerLowest,
-          )
-          .clickable { onTabSelected(ScannerNavTab.HISTORY) },
-        contentAlignment = Alignment.Center,
-      ) {
-        Column(
-          horizontalAlignment = Alignment.CenterHorizontally,
-          verticalArrangement = Arrangement.Center,
-        ) {
-          Icon(
-            imageVector = Icons.Default.History,
-            contentDescription = stringResource(R.string.nav_history),
-            tint = if (isHistoryActive) RadarPrimaryContainer else RadarOnSurfaceVariant,
-            modifier = Modifier.size(22.dp),
-          )
-          Spacer(modifier = Modifier.height(2.dp))
-          Text(
-            text = stringResource(R.string.nav_history).uppercase(),
-            style = MaterialTheme.typography.labelSmall,
-            fontFamily = FontFamily.Monospace,
-            letterSpacing = 0.8.sp,
-            color = if (isHistoryActive) RadarPrimaryContainer else RadarOnSurfaceVariant,
-          )
-        }
-      }
-    }
-  }
+  BleRadarBottomNavBar(
+    selectedTab = selectedTab,
+    onTabSelected = onTabSelected,
+    modifier = modifier,
+  )
 }
 
 @Preview(name = "Scanner Content - Default Scanning State", showBackground = true)
