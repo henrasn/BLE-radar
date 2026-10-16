@@ -8,9 +8,9 @@ The application provides continuous BLE discovery, distance estimation categoriz
 
 ## 2. Screenshots
 
-| Home | Detail | Profile |
-|:----:|:------:|:-------:|
-| <img src="screenshots/home.png" width="220"/> | <img src="screenshots/detail.png" width="220"/> | <img src="screenshots/profile.png" width="220"/> |
+| Scanner | Target | History |
+|:-------:|:------:|:-------:|
+| <img src="screenshots/scanner.png" width="220"/> | <img src="screenshots/target.png" width="220"/> | <img src="screenshots/history.png" width="220"/> |
 
 ## 3. Features
 
@@ -102,9 +102,9 @@ ble-radar/
 ├── docs/
 │   └── architecture.png                      # Clean architecture diagram
 ├── screenshots/
-│   ├── home.png                              # Scanner screen screenshot
-│   ├── detail.png                            # Radar target tracking screenshot
-│   └── profile.png                           # Device history screen screenshot
+│   ├── scanner.png                           # Scanner screen screenshot
+│   ├── target.png                            # Radar target tracking screenshot
+│   └── history.png                           # Device history screen screenshot
 ├── gradle/
 │   └── libs.versions.toml                    # Version catalog dependencies
 ├── build.gradle.kts                          # Root build script
